@@ -1,0 +1,38 @@
+{
+  "target_url": "https://books.toscrape.com/",
+
+  "login": {
+    "enabled": false,
+    "login_url": "https://books.toscrape.com/accounts/login/",
+    "username": "demo_user",
+    "password": "demo_pass"
+  },
+
+  "scraping": {
+    "selectors": {
+      "book_container": "article.product_pod",
+      "title": "h3 a",
+      "price": ".price_color",
+      "rating": "p.star-rating",
+      "link": "h3 a"
+    },
+    "max_pages": 3
+  },
+
+  "actions": {
+    "add_to_cart": false,
+    "max_items": 2
+  },
+
+  "output": {
+    "output_dir": "output",
+    "filename_prefix": "books",
+    "formats": ["csv", "json"]
+  },
+
+  "browser": {
+    "headless": true,
+    "slow_mo": 500,
+    "timeout": 30000
+  }
+}

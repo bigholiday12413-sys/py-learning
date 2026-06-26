@@ -1,0 +1,8 @@
+{
+  "target_url": "https://example.com",
+  "output_dir": "output",
+  "debug": true,
+  "headless": true,
+  "app_name": "Web Scraper Tool",
+  "version": "1.0.0"
+}

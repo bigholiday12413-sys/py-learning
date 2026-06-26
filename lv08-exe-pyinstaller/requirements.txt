@@ -1,0 +1,8 @@
+# Lv08: exe化に必要なパッケージ
+#
+# PyInstaller: Pythonスクリプトをexeに変換するツール
+pyinstaller>=6.0
+
+# Playwright: ブラウザ自動操作（exe化の応用例で使用）
+# 注意: exe化する場合はブラウザバイナリの扱いに注意（build_guide.md参照）
+playwright>=1.40

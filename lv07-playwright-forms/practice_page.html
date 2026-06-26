@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lv07 練習用フォーム</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', 'Meiryo', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+        h2 {
+            margin-top: 25px;
+            margin-bottom: 10px;
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        form {
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .radio-group, .checkbox-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 5px 0;
+        }
+        .radio-group label, .checkbox-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        button {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        #submit-btn {
+            background: #3498db;
+            color: #fff;
+        }
+        #submit-btn:hover {
+            background: #2980b9;
+        }
+        #reset-btn {
+            background: #95a5a6;
+            color: #fff;
+        }
+        #alert-btn {
+            background: #e74c3c;
+            color: #fff;
+        }
+        #confirm-btn {
+            background: #f39c12;
+            color: #fff;
+        }
+        #prompt-btn {
+            background: #9b59b6;
+            color: #fff;
+        }
+        #new-tab-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #3498db;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        #results {
+            margin-top: 30px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        #results h2 {
+            color: #27ae60;
+            border-bottom-color: #27ae60;
+        }
+        #results-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .dialog-result {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #eaf7ea;
+            border-left: 4px solid #27ae60;
+            border-radius: 4px;
+        }
+        /* iframe用セクション */
+        .iframe-section {
+            margin-top: 25px;
+        }
+        iframe {
+            width: 100%;
+            height: 120px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Playwright フォーム練習ページ</h1>
+
+    <form id="practice-form">
+        <!-- テキスト入力 -->
+        <h2>テキスト入力</h2>
+        <div class="form-group">
+            <label for="username">ユーザー名</label>
+            <input type="text" id="username" name="username" placeholder="例: tanaka_taro">
+        </div>
+        <div class="form-group">
+            <label for="email">メールアドレス</label>
+            <input type="email" id="email" name="email" placeholder="例: taro@example.com">
+        </div>
+        <div class="form-group">
+            <label for="password">パスワード</label>
+            <input type="password" id="password" name="password" placeholder="8文字以上">
+        </div>
+
+        <!-- テキストエリア -->
+        <h2>テキストエリア</h2>
+        <div class="form-group">
+            <label for="bio">自己紹介</label>
+            <textarea id="bio" name="bio" placeholder="自己紹介を入力してください"></textarea>
+        </div>
+
+        <!-- セレクトボックス -->
+        <h2>セレクトボックス</h2>
+        <div class="form-group">
+            <label for="department">部署（単一選択）</label>
+            <select id="department" name="department">
+                <option value="">-- 選択してください --</option>
+                <option value="sales">営業部</option>
+                <option value="engineering">技術部</option>
+                <option value="hr">人事部</option>
+                <option value="marketing">マーケティング部</option>
+                <option value="accounting">経理部</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="skills">スキル（複数選択: Ctrl+クリック）</label>
+            <select id="skills" name="skills" multiple size="4">
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="sql">SQL</option>
+                <option value="docker">Docker</option>
+            </select>
+        </div>
+
+        <!-- ラジオボタン -->
+        <h2>ラジオボタン</h2>
+        <div class="form-group">
+            <label>経験年数</label>
+            <div class="radio-group">
+                <label><input type="radio" name="experience" value="junior"> 1〜3年</label>
+                <label><input type="radio" name="experience" value="mid"> 3〜5年</label>
+                <label><input type="radio" name="experience" value="senior"> 5〜10年</label>
+                <label><input type="radio" name="experience" value="expert"> 10年以上</label>
+            </div>
+        </div>
+
+        <!-- チェックボックス -->
+        <h2>チェックボックス</h2>
+        <div class="form-group">
+            <label>希望する働き方</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="workstyle" value="remote"> リモートワーク</label>
+                <label><input type="checkbox" name="workstyle" value="flex"> フレックスタイム</label>
+                <label><input type="checkbox" name="workstyle" value="side-job"> 副業OK</label>
+                <label><input type="checkbox" name="workstyle" value="overseas"> 海外勤務</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="agree" name="agree" value="yes">
+                利用規約に同意する
+            </label>
+        </div>
+
+        <!-- ファイルアップロード -->
+        <h2>ファイルアップロード</h2>
+        <div class="form-group">
+            <label for="resume">履歴書アップロード</label>
+            <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx,.txt">
+        </div>
+
+        <!-- ボタン類 -->
+        <h2>操作ボタン</h2>
+        <div class="form-group">
+            <button type="submit" id="submit-btn">送信する</button>
+            <button type="reset" id="reset-btn">リセット</button>
+            <button type="button" id="alert-btn">アラート表示</button>
+            <button type="button" id="confirm-btn">確認ダイアログ</button>
+            <button type="button" id="prompt-btn">入力ダイアログ</button>
+        </div>
+
+        <!-- 別タブリンク -->
+        <div class="form-group">
+            <a id="new-tab-link" href="https://example.com" target="_blank">新しいタブで開く（example.com）</a>
+        </div>
+    </form>
+
+    <!-- 送信結果表示エリア -->
+    <div id="results">
+        <h2>送信結果</h2>
+        <div id="results-content"></div>
+    </div>
+
+    <!-- ダイアログ結果表示 -->
+    <div id="dialog-result" class="dialog-result" style="display:none;">
+        <strong>ダイアログ結果:</strong> <span id="dialog-result-text"></span>
+    </div>
+
+    <!-- iframe練習用 -->
+    <div class="iframe-section">
+        <h2>iframe内フォーム</h2>
+        <iframe id="practice-iframe" srcdoc='
+            <!DOCTYPE html>
+            <html lang="ja">
+            <head>
+                <style>
+                    body { font-family: Meiryo, sans-serif; padding: 15px; background: #fffbe6; }
+                    label { font-weight: bold; margin-right: 10px; }
+                    input { padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; }
+                    button { padding: 5px 15px; background: #f39c12; border: none; border-radius: 4px; color: #fff; cursor: pointer; margin-left: 10px; }
+                    #iframe-result { margin-top: 10px; color: #27ae60; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <label for="iframe-input">iframe内入力欄:</label>
+                <input type="text" id="iframe-input" placeholder="ここに入力">
+                <button id="iframe-btn" onclick="document.getElementById(&quot;iframe-result&quot;).textContent = &quot;入力値: &quot; + document.getElementById(&quot;iframe-input&quot;).value;">送信</button>
+                <div id="iframe-result"></div>
+            </body>
+            </html>
+        '></iframe>
+    </div>
+
+    <script>
+        // フォーム送信処理（ページ遷移せずに結果を表示）
+        document.getElementById('practice-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = {};
+
+            // FormDataからオブジェクトに変換（複数値対応）
+            for (const [key, value] of formData.entries()) {
+                if (data[key]) {
+                    if (Array.isArray(data[key])) {
+                        data[key].push(value);
+                    } else {
+                        data[key] = [data[key], value];
+                    }
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            // ファイル情報を別途取得
+            const fileInput = document.getElementById('resume');
+            if (fileInput.files.length > 0) {
+                data['resume'] = fileInput.files[0].name + ' (' + (fileInput.files[0].size / 1024).toFixed(1) + ' KB)';
+            }
+
+            // 結果表示
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('results-content');
+            resultsDiv.style.display = 'block';
+            resultsContent.textContent = JSON.stringify(data, null, 2);
+
+            // 画面をスクロールして結果を見せる
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // アラートボタン
+        document.getElementById('alert-btn').addEventListener('click', function() {
+            alert('これはアラートです！');
+        });
+
+        // 確認ダイアログボタン
+        document.getElementById('confirm-btn').addEventListener('click', function() {
+            const result = confirm('本当に実行しますか？');
+            const resultDiv = document.getElementById('dialog-result');
+            const resultText = document.getElementById('dialog-result-text');
+            resultDiv.style.display = 'block';
+            resultText.textContent = result ? 'OK（承認）' : 'キャンセル';
+        });
+
+        // 入力ダイアログボタン
+        document.getElementById('prompt-btn').addEventListener('click', function() {
+            const result = prompt('お名前を入力してください:', '');
+            const resultDiv = document.getElementById('dialog-result');
+            const resultText = document.getElementById('dialog-result-text');
+            resultDiv.style.display = 'block';
+            resultText.textContent = result !== null ? '入力値: ' + result : 'キャンセル';
+        });
+    </script>
+</body>
+</html>

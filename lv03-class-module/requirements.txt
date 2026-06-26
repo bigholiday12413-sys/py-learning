@@ -1,0 +1,5 @@
+# Lv03 - クラスとモジュール
+# 現在は外部パッケージ不要
+# 必要になった場合は以下のように追加する:
+#   pip install パッケージ名
+#   pip freeze > requirements.txt
