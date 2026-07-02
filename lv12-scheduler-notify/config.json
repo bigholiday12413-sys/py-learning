@@ -1,0 +1,9 @@
+{
+    "notify": {
+        "dry_run": true,
+        "service": "slack",
+        "webhook_url": "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ",
+        "chatwork_api_token": "your_api_token_here",
+        "chatwork_room_id": "12345678"
+    }
+}

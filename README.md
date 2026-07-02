@@ -1,4 +1,4 @@
-# Python + Playwright 学習ロードマップ（Lv0〜Lv9＋補講）
+# Python + Playwright 学習ロードマップ（Lv0〜Lv13＋補講）
 
 プログラミング経験がなくても、Python の基礎から始めて **Playwrightでブラウザ操作する exe ファイル** を作れるようになるまでの、段階的な学習コースです。
 前提知識は不要。すべてのコードに日本語の解説コメントが付いています。
@@ -32,6 +32,18 @@ pip --version      # pip が使えることを確認
 | 7 | `lv07-playwright-forms` | フォーム自動操作 | 入力・選択・チェック・ファイルアップロード・複数タブ |
 | 8 | `lv08-exe-pyinstaller` | exe化 | PyInstaller・設定ファイル外出し・アイコン設定 |
 | 9 | `lv09-gyomu-tool` | 実践：業務自動化ツール | 設定→ログイン→スクレイピング→操作→CSV出力→exe化 |
+
+### 発展編（Lv9 完走後。Lv9 のツールを実務運用レベルに育てる）
+
+| Lv | フォルダ | テーマ | 学べること |
+|----|---------|--------|-----------|
+| 10 | `lv10-excel-report` | Excelレポート出力 | openpyxl・書式設定・複数シート・集計・数式埋め込み |
+| 11 | `lv11-sqlite-diff` | データ蓄積と差分検知 | SQLite・SQL基礎・スナップショット比較・価格監視 |
+| 12 | `lv12-scheduler-notify` | 定期実行と通知 | schedule・タスクスケジューラ・Slack/ChatWork Webhook |
+| 13 | `lv13-pytest` | テスト入門 | pytest・parametrize・fixture・テストしやすい設計 |
+
+発展編は Lv10→13 の順でなくてもよい。興味のあるものから着手してOK
+（Lv12 は Lv11 と組み合わせると効果が大きい／Lv13 はどのタイミングでも役立つ）。
 
 ### 補講（本編と並行して読む）
 
