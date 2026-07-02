@@ -2,11 +2,7 @@
 actions.py - ブラウザ操作（ログイン・クリック・フォーム入力）
 
 ページ上のフォーム入力やボタンクリックなどの操作をまとめたモジュール。
-
-JS/TS との対比:
-  - page.fill() → Puppeteer の page.type() に相当
-  - page.click() → element.click() と同じ
-  - locator.wait_for() → page.waitForSelector()
+（fill / click などの基本操作は Lv07 で学んだ通り）
 """
 
 import logging
@@ -20,10 +16,9 @@ def perform_login(page: Page, login_config: dict, logger: logging.Logger):
     ここではフォーム操作のデモとしてログインページに移動し、
     フォームに値を入力する流れを示す。
 
-    JS/TS との対比:
-      - page.goto() → page.goto() （同じ）
-      - page.fill() → page.type() または page.fill()
-      - page.click() → page.click()
+    実務ポイント:
+      要素が存在するか count() で確認してから操作することで、
+      サイト構造の違いによるエラーを防いでいる。
 
     Args:
         page: Playwright の Page オブジェクト
@@ -39,7 +34,6 @@ def perform_login(page: Page, login_config: dict, logger: logging.Logger):
     page.wait_for_load_state("networkidle")
 
     # --- ユーザー名の入力 ---
-    # JS: await page.fill('#id_login', username)
     username_field = page.locator("#id_login")
     if username_field.count() > 0:
         username_field.fill(username)
@@ -56,7 +50,7 @@ def perform_login(page: Page, login_config: dict, logger: logging.Logger):
         logger.warning("パスワードフィールドが見つかりません")
 
     # --- ログインボタンをクリック ---
-    # JS: await page.click('button[type="submit"]')
+    # セレクタをカンマで並べると「どちらかに一致する要素」を探せる
     submit_button = page.locator('input[type="submit"], button[type="submit"]')
     if submit_button.count() > 0:
         submit_button.first.click()
@@ -85,10 +79,8 @@ def perform_cart_actions(
     スクレイピングで取得した書籍データのうち、指定数だけ詳細ページを開いて
     カートに追加する。
 
-    JS/TS との対比:
-      - for ループ → for...of や Array.forEach
-      - enumerate() → JS なら entries() や index 付きの forEach
-      - try/except → try/catch
+    実務ポイント:
+      ループ内を try/except で囲み、1件の失敗で全体を止めない。
 
     Args:
         page: Playwright の Page オブジェクト
@@ -103,7 +95,7 @@ def perform_cart_actions(
     success_count = 0
 
     # --- 指定数だけ処理する ---
-    # JS: data.slice(0, maxItems).forEach((item, i) => { ... })
+    # data[:max_items] で先頭 max_items 件だけを取り出す（スライス）
     for i, item in enumerate(data[:max_items]):
         try:
             logger.info(f"[{i + 1}/{max_items}] {item['title']} をカートに追加...")
@@ -126,7 +118,6 @@ def perform_cart_actions(
             page.wait_for_load_state("networkidle")
 
             # --- 「Add to basket」ボタンをクリック ---
-            # JS: await page.click('button.btn-primary')
             add_button = page.locator("button.btn-primary, .add-to-basket")
             if add_button.count() > 0:
                 add_button.first.click()

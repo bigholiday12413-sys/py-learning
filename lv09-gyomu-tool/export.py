@@ -2,12 +2,7 @@
 export.py - データ出力モジュール（CSV・JSON・サマリー）
 
 スクレイピングで取得したデータをファイルに書き出すモジュール。
-
-JS/TS との対比:
-  - csv モジュール → npm の csv-writer や papaparse
-  - json.dumps() → JSON.stringify()
-  - open() + write() → fs.writeFileSync()
-  - encoding="utf-8-sig" → BOM付きUTF-8（Excel対応）
+（csv モジュールの基本は Lv02、JSON は Lv08 で学んだ通り）
 """
 
 import csv
@@ -22,12 +17,6 @@ def save_to_csv(data: list[dict], output_config: dict) -> str:
 
     日本語を含むCSVをExcelで開くために、UTF-8 BOM付き（utf-8-sig）で出力する。
     これは日本語環境のExcelでよくある文字化け対策。
-
-    JS/TS との対比:
-      - csv.DictWriter → npm の csv-writer
-      - writeheader() → ヘッダー行を書き込む
-      - writerows() → データ行をまとめて書き込む
-      - '﻿' (BOM) → Node.js でも同じテクニックが使える
 
     Args:
         data: 出力するデータ（辞書のリスト）
@@ -51,10 +40,8 @@ def save_to_csv(data: list[dict], output_config: dict) -> str:
 
     # --- CSVを書き出す ---
     # encoding="utf-8-sig" で BOM 付き UTF-8 にする（Excelで文字化けしない）
-    # JS では fs.writeFileSync(path, '﻿' + csvContent, 'utf-8') と書く
     with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
         # --- ヘッダー行を最初のデータのキーから自動生成 ---
-        # JS: Object.keys(data[0])
         fieldnames = data[0].keys()
         writer = csv.DictWriter(f, fieldnames=fieldnames)
 
@@ -68,8 +55,7 @@ def save_to_json(data: list[dict], output_config: dict) -> str:
     """
     データをJSONファイルに保存する。
 
-    JS/TS との対比:
-      - json.dumps(data, ensure_ascii=False) → JSON.stringify(data, null, 2)
+    ポイント:
       - ensure_ascii=False → 日本語をそのまま出力（エスケープしない）
       - indent=2 → 見やすいインデント付き出力
 
@@ -95,7 +81,6 @@ def save_to_json(data: list[dict], output_config: dict) -> str:
 
     # --- JSONを書き出す ---
     # ensure_ascii=False で日本語をそのまま出力する
-    # JS: JSON.stringify(data, null, 2)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -106,9 +91,8 @@ def generate_summary(results: dict) -> str:
     """
     処理結果のサマリーテキストを生成する。
 
-    JS/TS との対比:
-      - f-string → テンプレートリテラル `${variable}`
-      - 三重クォート（\"\"\"...\"\"\"） → テンプレートリテラルの複数行版
+    三重クォートの f-string（f\"\"\"...\"\"\"）を使うと、
+    複数行のテキストに変数を埋め込みながら組み立てられる。
 
     Args:
         results: 処理結果の辞書
@@ -126,7 +110,6 @@ def generate_summary(results: dict) -> str:
     seconds = total_seconds % 60
 
     # --- サマリーテキストを組み立てる ---
-    # f-string は JS のテンプレートリテラルと同じ使い方
     summary = f"""{'=' * 50}
   処理結果サマリー
 {'=' * 50}

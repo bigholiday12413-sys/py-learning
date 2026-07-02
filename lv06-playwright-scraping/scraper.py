@@ -4,16 +4,10 @@ Lv06 - 再利用可能なスクレイパークラス
 
 実務で使えるスクレイパーをクラスとして設計する。
 以下のPythonパターンを学ぶ:
-  - クラス設計（__init__, メソッド）
-  - コンテキストマネージャ（__enter__ / __exit__）→ with文で安全にリソース管理
+  - クラス設計（__init__, メソッド）… Lv03 の復習
+  - コンテキストマネージャ（__enter__ / __exit__）→ 自作クラスを with 文で使えるようにする
   - loggingモジュール（printの代わりに構造化されたログ出力）
-  - 型ヒント（JS/TSの型注釈と同様の記法）
-
-JS/TS開発者向けメモ:
-  - Python のクラスは JS の class とほぼ同じ構文
-  - __init__ = constructor
-  - self = this（ただし引数として明示的に書く）
-  - __enter__/__exit__ = try/finally の自動化（Disposable パターンに近い）
+  - 型ヒントの実践的な使い方
 """
 
 import csv
@@ -63,13 +57,8 @@ class PlaywrightScraper:
     コンテキストマネージャのメリット:
       - with ブロックを抜けるときに自動でブラウザを閉じる
       - エラーが発生しても確実にリソースを解放する
-      - JS/TSの using 宣言（TC39 Stage 3）や try/finally と同じ目的
-
-    JS/TS でいうと:
-      class Scraper implements Disposable {
-        [Symbol.dispose]() { this.close(); }
-      }
-      using scraper = new Scraper();  // スコープ終了時に自動 dispose
+      - Lv02 の with open(...) と同じ仕組みを「自作クラス」で実現できる
+        （__enter__ と __exit__ を定義するだけ）
     """
 
     def __init__(
@@ -82,7 +71,7 @@ class PlaywrightScraper:
         timeout: int = 30000,
     ):
         """
-        スクレイパーの初期化（= JS/TSの constructor）。
+        スクレイパーの初期化（コンストラクタ）。
 
         Args:
             headless: ブラウザを非表示で実行するか（デフォルト: True）
@@ -122,10 +111,6 @@ class PlaywrightScraper:
         """
         with 文に入ったときに呼ばれる。
         ブラウザを起動してページを準備する。
-
-        JS/TSの using 宣言に対応:
-          using scraper = new PlaywrightScraper();  // __enter__ が呼ばれる
-          // ブロック終了時に __exit__ が呼ばれる
 
         戻り値が with ... as xxx の xxx に入る
         """
@@ -212,8 +197,7 @@ class PlaywrightScraper:
         現在のページオブジェクトを返すプロパティ。
 
         @property デコレータを使うと、メソッドをプロパティとしてアクセスできる:
-          scraper.page  ← () なしでアクセス
-          ※ JS/TSの get page() { return this._page; } と同じ
+          scraper.page  ← () なしでアクセス（Lv03 の Circle.radius と同じ）
         """
         if self._page is None:
             raise RuntimeError("ブラウザが起動していません。with文を使ってください。")
@@ -247,9 +231,8 @@ class PlaywrightScraper:
             # → ["£51.77", "£53.74", "£50.10", ...]
         """
         elements = self.page.query_selector_all(selector)
-        # リスト内包表記: JS/TSの array.map() に相当
-        # [el.text_content().strip() for el in elements]
-        # ↑ JS/TS: elements.map(el => el.textContent.trim())
+        # リスト内包表記（Lv01参照）: 各要素からテキストを取り出し、
+        # 前後の空白を除去した新しいリストを1行で作る
         return [el.text_content().strip() for el in elements]
 
     def extract_attribute_list(self, selector: str, attribute: str) -> list[str]:
@@ -358,7 +341,7 @@ class PlaywrightScraper:
             for row in page_data:
                 row["page"] = page_num
             all_data.extend(page_data)
-            # extend: リストにリストの要素を追加（JS/TSの push(...arr) に相当）
+            # extend: リストに別のリストの全要素を追加する（append は1要素だけ）
 
             # 「次へ」ボタンを探す
             next_button = self.page.query_selector(next_button_selector)

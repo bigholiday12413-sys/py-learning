@@ -4,8 +4,8 @@
 
 Python の Playwright ライブラリを使って、ブラウザを自動操作する基礎を学ぶ。
 これがこのリポジトリの **本丸** -- ここからが本番。
-JS/TS の Puppeteer や Playwright (Node版) を知っている人向けに、
-Python 版 Playwright の使い方を解説する。
+「ページを開く・要素を取得する・クリックする・入力する・スクリーンショットを撮る」
+という自動操作の基本要素を一通り体験する。
 
 ## 動かし方
 
@@ -13,7 +13,6 @@ Python 版 Playwright の使い方を解説する。
 cd py-learning/lv05-playwright-basics
 
 # 1. 仮想環境を作成（初回のみ）
-#    JS/TS の node_modules に相当する隔離環境
 python -m venv venv
 
 # 2. 仮想環境を有効化
@@ -25,11 +24,10 @@ python -m venv venv
 source venv/bin/activate
 
 # 3. 依存パッケージをインストール（初回のみ）
-#    JS/TS の npm install に相当
 pip install -r requirements.txt
 
 # 4. Playwright 用のブラウザをインストール（初回のみ）
-#    Node版と違い、Playwright が専用ブラウザバイナリを管理する
+#    Playwright は自動操作専用のブラウザバイナリを自分で管理する
 #    chromium だけ入れれば十分（firefox, webkit も選べる）
 playwright install chromium
 
@@ -42,60 +40,41 @@ python main_async.py
 
 ## 学べること
 
-| Python Playwright | JS/TS 対応概念 |
-|-------------------|---------------|
-| `sync_playwright()` | `puppeteer.launch()` / `chromium.launch()` |
-| `page.goto(url)` | `page.goto(url)` / `await page.goto(url)` |
-| `page.locator(selector)` | `page.$(selector)` / `page.locator(selector)` |
-| `locator.click()` | `element.click()` |
-| `locator.fill(text)` | `element.type(text)` |
-| `locator.text_content()` | `element.textContent` |
-| `locator.get_attribute(name)` | `element.getAttribute(name)` |
-| `locator.all()` | `page.$$(selector)` / `locator.all()` |
-| `page.wait_for_selector()` | `page.waitForSelector()` |
-| `page.screenshot()` | `page.screenshot()` |
-| `headless=False` | `{ headless: false }` |
+| Python Playwright | ひとことで言うと |
+|-------------------|----------------|
+| `sync_playwright()` | Playwright を起動する入口 |
+| `p.chromium.launch()` | ブラウザを立ち上げる |
+| `page.goto(url)` | URL に移動する |
+| `page.locator(selector)` | CSS セレクタで要素を指定する |
+| `locator.click()` | 要素をクリックする |
+| `locator.fill(text)` | テキストフィールドに入力する |
+| `locator.text_content()` | 要素内のテキストを取得する |
+| `locator.get_attribute(name)` | 要素の属性値を取得する |
+| `locator.all()` | 一致する全要素をリストで取得する |
+| `page.wait_for_selector()` | 要素が現れるまで待つ |
+| `page.screenshot()` | スクリーンショットを撮る |
+| `headless=False` | ブラウザ画面を表示して実行する |
 
 ## Playwrightとは
 
 Playwright はマイクロソフトが開発したブラウザ自動操作ライブラリ。
-Node.js 版が先に登場し、後から Python 版が追加された。
+Chromium / Firefox / WebKit の3種類のブラウザに対応している。
 
-### JS/TS の Puppeteer との比較
+### Lv04 のスクレイピングとの違い
 
-| 項目 | Puppeteer (JS) | Playwright (Python) |
-|------|---------------|-------------------|
-| 開発元 | Google | Microsoft |
-| 対応ブラウザ | Chromium 中心 | Chromium, Firefox, WebKit |
-| API スタイル | `await page.$()` | `page.locator()` |
-| 自動待機 | 手動で waitFor が多い | locator が自動で待機してくれる |
-| セレクタ | CSS / XPath | CSS / XPath / text= / role= など豊富 |
-| Python対応 | なし | 公式サポート |
+| 項目 | requests + BeautifulSoup (Lv04) | Playwright (Lv05〜) |
+|------|--------------------------------|---------------------|
+| 仕組み | HTML を文字列として取得して解析 | 本物のブラウザを起動して操作 |
+| JavaScript 実行 | されない（静的HTMLのみ） | される（動的サイトもOK） |
+| ログイン・クリック・入力 | 苦手（手動でHTTPを組む必要） | 得意（人間の操作を再現） |
+| 速度・軽さ | 速い・軽い | 遅い・重い |
+| 使い分け | 静的なページの一括取得 | 動的なページ・操作が必要な業務 |
 
-### JS Playwright と Python Playwright の違い
+### Playwright の強み: 自動待機
 
-```javascript
-// JS/TS版（おなじみの書き方）
-const { chromium } = require('playwright');
-const browser = await chromium.launch({ headless: false });
-const page = await browser.newPage();
-await page.goto('https://example.com');
-await page.locator('h1').textContent();
-await browser.close();
-```
-
-```python
-# Python版（sync API）-- await が不要でシンプル
-from playwright.sync_api import sync_playwright
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False)
-    page = browser.new_page()
-    page.goto("https://example.com")
-    page.locator("h1").text_content()
-    browser.close()
-```
-
-ほぼ同じだが、Python版は **snake_case**（`new_page` vs `newPage`）になる。
+`page.locator()` で取得した要素は、操作時に
+「要素が画面に現れるまで自動で待って」くれる。
+このおかげで「まだ表示されていない要素をクリックして失敗」が起きにくい。
 
 ## sync vs async API
 
@@ -114,8 +93,8 @@ with sync_playwright() as p:
     browser.close()
 ```
 
-- `await` が不要でコードが読みやすい
-- 上から順に1行ずつ実行される（JS でいう同期処理）
+- 上から順に1行ずつ実行される。素直に読める
+- 各操作が完了するまで次の行に進まない
 - **スクリプトや業務自動化ツールにはこれで十分**
 
 ### async API（非同期）
@@ -135,7 +114,7 @@ async def main():
 asyncio.run(main())
 ```
 
-- `async/await` が必要（JS/TS の感覚に近い）
+- `async def` / `await` を使って書く（詳しくは `main_async.py` の解説を参照）
 - FastAPI や aiohttp など非同期フレームワークと組み合わせる場合に使う
 - 複数ブラウザの並列操作が可能
 

@@ -4,6 +4,11 @@ Lv05 - Playwright 基礎（非同期 API）
 Python Playwright の async API を使ってブラウザを自動操作する。
 main_sync.py と同じ処理を非同期で書いた版。
 
+★ 非同期 (async) とは？
+  「待ち時間の間に他の処理を進められる」仕組み。
+  ページの読み込み待ちなど「待つだけ」の時間が多い処理では、
+  複数の作業を並行して進められるため効率が良い。
+
 ★ いつ async を使うべきか？
   - FastAPI / aiohttp など非同期フレームワークと組み合わせるとき
   - 複数ブラウザを並列で操作したいとき
@@ -11,10 +16,6 @@ main_sync.py と同じ処理を非同期で書いた版。
 
 ★ 業務自動化ツールを1つ作るだけなら sync API で十分。
   async は「知っておく」レベルでOK。
-
-JS/TS 開発者向けポイント：
-  - JS/TS の async/await とほぼ同じ感覚で書ける
-  - ただし Python では asyncio.run() で明示的にイベントループを起動する必要がある
 
 実行方法：
     python main_async.py
@@ -25,14 +26,12 @@ JS/TS 開発者向けポイント：
 # ============================================================
 
 # asyncio: Python の非同期処理ライブラリ
-# JS/TS では async/await は言語に組み込まれているが、
-# Python では asyncio モジュールを使ってイベントループを管理する
+# 非同期関数(async def)を実行するための「イベントループ」を管理する
 import asyncio
 
 # async_playwright をインポート（sync 版と異なるモジュール）
-# JS/TS: const { chromium } = require('playwright')
-# Python sync: from playwright.sync_api import sync_playwright
-# Python async: from playwright.async_api import async_playwright  ← こちら
+# sync版:  from playwright.sync_api import sync_playwright
+# async版: from playwright.async_api import async_playwright  ← こちら
 from playwright.async_api import async_playwright
 
 # 待機用（デモ用途）
@@ -49,10 +48,10 @@ async def main():
     3. ほぼ全てのメソッド呼び出しに await が付く
     4. asyncio.run(main()) で実行する
 
-    JS/TS 開発者へ：
-    JS/TS の async/await と同じ感覚で読めるはず。
-    ただし Python では await を忘れると Coroutine オブジェクトが返るだけで、
-    実行されないので注意（JS でも await 忘れると Promise が返るのと同じ）。
+    ★ await とは？
+    「この処理が終わるまで待つ。ただし待っている間、他の非同期処理は
+    進んでよい」という意味のキーワード。async def の中でだけ使える。
+    await を忘れると Coroutine オブジェクトが返るだけで実行されないので注意。
     """
 
     # ================================================================
@@ -101,7 +100,7 @@ async def main():
 
         # --- 現在の URL を取得する ---
         # page.url はプロパティなので await 不要（sync と同じ）
-        # ★ プロパティアクセスには await は付けない（JS と同じルール）
+        # ★ await が付くのはメソッド呼び出しだけ。プロパティには付けない
         current_url = page.url
         print(f"現在のURL: {current_url}")
 
@@ -240,15 +239,14 @@ async def main():
         # 9. ★ async ならではの機能：並列処理
         # ================================================================
         # async API の最大のメリット = 複数の処理を同時に実行できる
-        # JS/TS の Promise.all() と同じ概念
 
         print("\n" + "=" * 60)
         print("9. ★ async ならでは：並列処理（asyncio.gather）")
         print("=" * 60)
 
         # 複数の情報を同時に取得する例
-        # JS/TS: const [title, url] = await Promise.all([...])
-        # Python: results = await asyncio.gather(coroutine1, coroutine2, ...)
+        # asyncio.gather(処理1, 処理2, ...) は全ての処理を並行実行し、
+        # 全部終わったら結果をまとめて返す
         page_title, page_content_text = await asyncio.gather(
             page.title(),                                   # タイトルを取得
             page.locator("article.product_pod").first.text_content(),  # 最初の本の情報
@@ -265,7 +263,7 @@ async def main():
         # sync版:  browser.close()
         # async版: await browser.close()
         print("\n3秒後にブラウザを閉じます...")
-        await asyncio.sleep(3)  # async では asyncio.sleep() を使う（time.sleep はブロッキング）
+        await asyncio.sleep(3)  # async では asyncio.sleep() を使う（time.sleep は全体を止めてしまう）
 
         await browser.close()
         print("ブラウザを閉じました")
@@ -300,8 +298,7 @@ async def main():
       6. time.sleep() → asyncio.sleep() を使う
       7. asyncio.gather() で並列処理ができる
 
-    ★ JS/TS 開発者にとっては async 版の方が馴染みやすいかもしれない。
-    ★ しかし Python では sync 版の方がシンプルで、業務ツールには十分。
+    ★ Python では sync 版の方がシンプルで、業務ツールには十分。
     ★ どちらを選んでも Playwright の機能は同じ。書き方が違うだけ。
     """)
 
@@ -309,11 +306,7 @@ async def main():
 # ============================================================
 # エントリーポイント
 # ============================================================
-# asyncio.run() で非同期関数を実行する
-# JS/TS ではトップレベル await が使えるが、
-# Python では明示的にイベントループを起動する必要がある
-#
-# JS/TS:  await main()  （トップレベル await）
-# Python: asyncio.run(main())  ← これが必要
+# 非同期関数 (async def) は普通の関数のようには呼べない。
+# asyncio.run(main()) がイベントループを起動し、main() を最後まで実行する。
 if __name__ == "__main__":
     asyncio.run(main())

@@ -2,7 +2,7 @@
 Lv02 - ファイル操作と CSV
 =========================
 Python のファイル読み書き・CSV処理・パス操作を学ぶ。
-JS/TS 経験者向けに、Node.js の fs モジュールとの違いを意識しながら進める。
+実務で最も出番の多い「ファイルを読む・加工する・書き出す」を一通り体験する。
 
 実行方法:
     python main.py
@@ -16,20 +16,19 @@ from pathlib import Path
 # ============================================================
 # 0. パスの準備 ― pathlib.Path でファイルパスを組み立てる
 # ============================================================
-# JS/TS では:
-#   const path = require('path');
-#   const dataDir = path.join(__dirname, 'data');
-#
-# Python (pathlib) では:
+# ファイルの場所（パス）は pathlib.Path オブジェクトで扱うのが現代の Python 流。
 #   Path(__file__) で「このスクリプト自身」のパスを取得し、
 #   .parent で親ディレクトリ、/ 演算子でパスを結合する。
+#
+# こうしておくと「どのフォルダから実行しても」正しい場所を指せる。
 
 # __file__ はこのスクリプトのファイルパス（Python 組み込み変数）
 BASE_DIR = Path(__file__).parent            # main.py があるフォルダ
 DATA_DIR = BASE_DIR / "data"                # data/ フォルダ
 OUTPUT_DIR = BASE_DIR / "output"            # output/ フォルダ
 
-# output/ フォルダがなければ作成（JS の fs.mkdirSync(..., { recursive: true }) に相当）
+# output/ フォルダがなければ作成
+# parents=True: 途中のフォルダもまとめて作る / exist_ok=True: 既にあってもエラーにしない
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 print("=" * 60)
@@ -50,21 +49,20 @@ print("\n--- 1. テキストファイルの書き込み ---")
 #   'b'  = バイナリモード     ← 'rb', 'wb' のように組み合わせる
 
 # ● with 文 (コンテキストマネージャ):
-#   JS/TS では try/finally でリソースを解放するが、Python では with 文が担う。
+#   開いたファイルは必ず閉じる(close する)必要がある。
+#   閉じ忘れると、書き込み内容が保存されなかったり、
+#   他のプログラムがファイルを開けなくなったりする。
 #
-#   JS/TS のイメージ:
-#     const fd = fs.openSync('file.txt', 'w');
-#     try {
-#       fs.writeSync(fd, 'Hello');
-#     } finally {
-#       fs.closeSync(fd);  // 必ず閉じる
-#     }
+#   with 文を使わない場合（閉じ忘れの危険がある書き方）:
+#     f = open('file.txt', 'w')
+#     f.write('Hello')
+#     f.close()   # ← 途中でエラーが起きるとここまで到達しない！
 #
-#   Python:
+#   with 文を使う場合（推奨）:
 #     with open('file.txt', 'w') as f:
 #         f.write('Hello')
 #     # ← with ブロックを抜けると自動で f.close() が呼ばれる
-#     # 例外が発生しても必ず閉じてくれるので安全！
+#     # 途中で例外が発生しても必ず閉じてくれるので安全！
 
 output_text_path = OUTPUT_DIR / "hello.txt"
 
@@ -83,7 +81,7 @@ print(f"  書き込み完了: {output_text_path}")
 print("\n--- 2. テキストファイルの読み込み ---")
 
 # 方法 1: read() で全文を一括読み込み
-# JS/TS の fs.readFileSync('file.txt', 'utf-8') に相当
+# ファイル全体を1つの文字列として受け取る。小さなファイル向き。
 with open(output_text_path, "r", encoding="utf-8") as f:
     content = f.read()  # 文字列として全文を取得
 print("  [read() で全文読み込み]")
@@ -124,16 +122,15 @@ with open(output_text_path, "r", encoding="utf-8") as f:
 # ============================================================
 print("\n--- 4. CSV の読み込み (csv.reader) ---")
 
-# csv.reader は各行をリスト（配列）として返す
-# JS/TS では npm の csv-parse を使うことが多いが、Python は標準ライブラリで対応
+# csv.reader は各行をリストとして返す
+# CSV 処理は Python の標準ライブラリ csv だけで完結する（追加インストール不要）
 
 csv_path = DATA_DIR / "sample.csv"
 
 with open(csv_path, "r", encoding="utf-8") as f:
     reader = csv.reader(f)
 
-    # next() でヘッダ行を先に取得
-    # JS/TS のイテレータの .next().value に相当
+    # next() で「次の1行」を取り出せる。最初に呼ぶとヘッダ行が取れる
     header = next(reader)
     print(f"  ヘッダ: {header}")
 
@@ -151,9 +148,9 @@ print(f"  合計 {len(rows)} 件のデータを読み込みました")
 # ============================================================
 print("\n--- 5. CSV の読み込み (csv.DictReader) ---")
 
-# csv.DictReader は各行を辞書（オブジェクト）として返す
-# JS/TS で言うと、CSV をパースして [{名前: '田中太郎', 部署: '営業部', ...}, ...] にするイメージ
-# ヘッダ行を自動でキーとして使ってくれるので便利！
+# csv.DictReader は各行を辞書として返す
+# {"名前": "田中太郎", "部署": "営業部", "年齢": "28"} のような形になり、
+# ヘッダ行を自動でキーとして使ってくれるので、列番号を覚える必要がなくて便利！
 
 employees = []  # 全従業員データを格納するリスト
 
@@ -176,8 +173,8 @@ print(f"  合計 {len(employees)} 件のデータを読み込みました")
 # ============================================================
 print("\n--- 6. データの加工 (部署ごとの集計) ---")
 
-# JS/TS なら reduce() や Object.groupBy() を使うところ
-# Python では辞書を使って手動で集計するか、collections.defaultdict を使う
+# 「部署ごとにまとめる」ようなグループ化は、辞書を使うのが定番パターン。
+# （慣れてきたら collections.defaultdict という便利版もある）
 
 dept_stats: dict[str, list[int]] = {}  # {部署名: [年齢リスト]}
 
@@ -215,8 +212,8 @@ for dept, ages in dept_stats.items():
 print("\n--- 7. CSV の書き込み (csv.writer) ---")
 
 # csv.writer でリスト形式で CSV を書き出す
-# newline='' を指定しないと、Windows で空行が入ることがあるので注意！
-# （JS/TS にはない Python 特有の罠）
+# newline='' を指定しないと、Windows で1行おきに空行が入ることがあるので注意！
+# （CSV 書き込み時のお約束として覚えてしまうのが早い）
 
 output_csv_path = OUTPUT_DIR / "summary_list.csv"
 
@@ -272,8 +269,8 @@ print("\n--- 9. エンコーディング (UTF-8 / Shift-JIS) ---")
 # - Shift-JIS (cp932): Windows の日本語環境で昔から使われている。
 #   Excel で開く CSV は Shift-JIS のことが多い。
 #
-# JS/TS (Node.js) では iconv-lite などの外部ライブラリが必要だが、
-# Python は open() の encoding パラメータだけで対応できる！
+# Python では open() の encoding パラメータを変えるだけで
+# どちらの文字コードにも対応できる。
 
 # Shift-JIS の CSV を読み込む
 sjis_path = DATA_DIR / "sample_sjis.csv"
@@ -322,14 +319,14 @@ print("\n--- 10. pathlib.Path の便利機能 ---")
 # pathlib は Python 3.4 で追加されたモダンなパス操作ライブラリ。
 # os.path よりもオブジェクト指向的で直感的に使える。
 #
-# JS/TS の path モジュールとの対応:
-#   path.join(a, b)      → Path(a) / b          （/ 演算子で結合）
-#   path.basename(p)     → Path(p).name         （ファイル名）
-#   path.dirname(p)      → Path(p).parent       （親ディレクトリ）
-#   path.extname(p)      → Path(p).suffix       （拡張子）
-#   path.resolve(p)      → Path(p).resolve()    （絶対パス）
-#   fs.existsSync(p)     → Path(p).exists()     （存在チェック）
-#   fs.statSync(p).isFile → Path(p).is_file()   （ファイルか？）
+# よく使うメソッド・属性:
+#   Path(a) / b          … パスの結合（/ 演算子）
+#   Path(p).name         … ファイル名
+#   Path(p).parent       … 親ディレクトリ
+#   Path(p).suffix       … 拡張子
+#   Path(p).resolve()    … 絶対パス
+#   Path(p).exists()     … 存在チェック
+#   Path(p).is_file()    … ファイルか？
 
 sample_path = DATA_DIR / "sample.csv"
 
@@ -342,7 +339,7 @@ print(f"  存在するか:       {sample_path.exists()}")    # True
 print(f"  ファイルか:       {sample_path.is_file()}")   # True
 print(f"  ディレクトリか:   {sample_path.is_dir()}")    # False
 
-# glob() でファイル検索（JS/TS の glob パッケージに相当）
+# glob() でパターンに一致するファイルを検索できる（* は「任意の文字列」）
 print("\n  data/ 内の CSV ファイル一覧:")
 for csv_file in DATA_DIR.glob("*.csv"):
     print(f"    {csv_file.name}")

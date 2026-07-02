@@ -4,10 +4,10 @@ Lv05 - Playwright 基礎（同期 API）
 Python Playwright の sync API を使ってブラウザを自動操作する。
 初心者はまずこちらから始める。
 
-JS/TS 開発者向けポイント：
-- Node 版の Playwright とほぼ同じ API だが snake_case になる
-- await が不要 -- 上から順に実行されるので読みやすい
-- with 文で playwright を管理する（JS の using に近い）
+ポイント：
+- sync API は上から順に1行ずつ実行されるので読みやすい
+- 各操作は完了するまで次の行に進まない（await などの記述は不要）
+- with 文で playwright のリソースを管理する（Lv02 のファイルと同じ考え方）
 
 実行方法：
     python main_sync.py
@@ -18,8 +18,7 @@ JS/TS 開発者向けポイント：
 # ============================================================
 
 # playwright.sync_api から sync_playwright をインポート
-# JS/TS でいう const { chromium } = require('playwright') に相当
-# sync = 同期 → await なしで書ける API
+# sync = 同期 → 各操作の完了を待ちながら順番に実行される API
 from playwright.sync_api import sync_playwright
 
 # time モジュール -- 動作確認用の待機に使う（実務では不要なことが多い）
@@ -31,8 +30,8 @@ def main():
     メイン処理：ブラウザを起動して Web サイトを操作する。
 
     sync_playwright() は with 文で使う。
-    with ブロックを抜けると自動的にリソースが解放される。
-    JS でいう try-finally + cleanup に相当する。
+    with ブロックを抜けると自動的にリソースが解放される
+    （ファイルの with open(...) と同じ仕組み）。
     """
 
     # ================================================================
@@ -40,16 +39,14 @@ def main():
     # ================================================================
 
     # with sync_playwright() as p: で Playwright を起動する
-    # JS/TS では const browser = await chromium.launch() と書くが、
-    # Python sync API では with 文 + p.chromium.launch() の形になる
+    # p を通じてブラウザ (chromium / firefox / webkit) を立ち上げられる
     with sync_playwright() as p:
 
         # --- ブラウザを起動する ---
         # headless=False → ブラウザの画面が表示される（学習中はこれが重要！）
         # headless=True（デフォルト）にすると画面なしで実行される
-        # JS/TS: const browser = await chromium.launch({ headless: false })
-        # slow_mo=1000 → 各操作の間に 1000ms の遅延を入れる（デモ用）
-        #                 実務では外すか小さくする
+        # slow_mo=500 → 各操作の間に 500ms の遅延を入れる（デモ用）
+        #                実務では外すか小さくする
         print("=" * 60)
         print("ブラウザを起動します...")
         print("headless=False なので、ブラウザの画面が見えます")
@@ -61,8 +58,6 @@ def main():
         )
 
         # --- 新しいページ（タブ）を開く ---
-        # JS/TS: const page = await browser.newPage()
-        # Python: new_page()（snake_case になる）
         page = browser.new_page()
 
         # ================================================================
@@ -70,35 +65,27 @@ def main():
         # ================================================================
 
         # --- URL に遷移する ---
-        # JS/TS: await page.goto('https://example.com')
-        # Python: page.goto("https://example.com")
-        # goto() は sync API では await 不要（関数が完了するまでブロックする）
+        # goto() はページの読み込みが完了するまで待ってから次に進む
         target_url = "https://books.toscrape.com/"
         print(f"\n{target_url} に遷移します...")
         page.goto(target_url)
 
         # --- ページタイトルを取得する ---
-        # JS/TS: const title = await page.title()
-        # Python: page.title()（await 不要）
         title = page.title()
         print(f"ページタイトル: {title}")
 
         # --- 現在の URL を取得する ---
-        # JS/TS: page.url() -- これはプロパティアクセス
-        # Python: page.url   -- こちらもプロパティ（メソッドではない）
+        # page.url はプロパティなので () を付けない
         current_url = page.url
         print(f"現在のURL: {current_url}")
 
         # ================================================================
         # 3. 要素の取得 -- page.locator()
         # ================================================================
-        # locator() は Playwright の推奨する要素取得方法
-        # JS/TS の querySelector() に近いが、自動待機機能がある
-        # → 要素が表示されるまで自動で待ってくれる（waitForSelector 不要なことが多い）
-        #
-        # JS/TS: page.locator('h1')
-        # Python: page.locator("h1")
-        # ほぼ同じ書き方！
+        # locator() は Playwright の推奨する要素取得方法。
+        # Lv04 の BeautifulSoup と同じく CSS セレクタで要素を指定するが、
+        # 大きな違いとして「自動待機機能」がある
+        # → 要素が表示されるまで自動で待ってくれる（明示的な待機が不要なことが多い）
 
         print("\n" + "=" * 60)
         print("3. 要素の取得と操作")
@@ -106,15 +93,12 @@ def main():
 
         # --- 単一要素のテキストを取得する ---
         # text_content() は要素内のテキストを返す
-        # JS/TS: await page.locator('h1').textContent()
-        # Python: page.locator("h1").text_content()  ← snake_case
         h1_text = page.locator("h1").text_content()
         print(f"h1 のテキスト: {h1_text}")
 
         # --- 要素の属性を取得する ---
         # get_attribute() で HTML 属性の値を取る
-        # JS/TS: await element.getAttribute('href')
-        # Python: locator.get_attribute("href")
+        # .first は「一致した要素のうち最初の1つ」を指す
         # 例: サイドバーのリンクの href を取得
         first_link = page.locator("aside .side_categories a").first
         link_href = first_link.get_attribute("href")
@@ -124,9 +108,8 @@ def main():
         # ================================================================
         # 4. 複数要素の取得 -- locator().all()
         # ================================================================
-        # all() はマッチする全要素をリストで返す
-        # JS/TS: const elements = await page.$$('selector') または locator.all()
-        # Python: page.locator("selector").all()
+        # locator はセレクタに一致する「全要素」を表せる。
+        # all() を呼ぶと、その時点の一致要素をリストで受け取れる。
 
         print("\n" + "=" * 60)
         print("4. 複数要素の取得（本のタイトル一覧）")
@@ -137,13 +120,10 @@ def main():
         book_titles = page.locator("article.product_pod h3 a")
 
         # count() で要素数を取得する
-        # JS/TS: await locator.count()
         book_count = book_titles.count()
         print(f"このページの本の数: {book_count}冊\n")
 
-        # all() で全要素をリストとして取得する
-        # JS/TS: const elements = await locator.all()
-        # Python: locator.all() → list[Locator] を返す
+        # all() で全要素をリストとして取得する → list[Locator]
         for i, book in enumerate(book_titles.all(), start=1):
             # title 属性に完全なタイトルが入っている
             # （テキスト表示は省略されることがあるため）
@@ -155,10 +135,8 @@ def main():
         # ================================================================
         # 5. 要素の待機 -- wait_for_selector()
         # ================================================================
-        # wait_for_selector() は指定セレクタの要素が現れるまで待機する
-        # Playwright の locator は自動待機するが、明示的に待ちたい場合に使う
-        # JS/TS: await page.waitForSelector('selector')
-        # Python: page.wait_for_selector("selector")
+        # wait_for_selector() は指定セレクタの要素が現れるまで待機する。
+        # Playwright の locator は自動待機するが、明示的に待ちたい場合に使う。
 
         print("\n" + "=" * 60)
         print("5. 要素の待機")
@@ -177,9 +155,8 @@ def main():
         # ================================================================
         # 6. クリック操作 -- locator.click()
         # ================================================================
-        # click() は要素をクリックする
-        # JS/TS: await page.locator('a').click()
-        # Python: page.locator("a").click()
+        # click() は要素をクリックする。
+        # 人間がマウスでクリックするのと同じことをコードで実行できる。
 
         print("\n" + "=" * 60)
         print("6. クリックでページ遷移")
@@ -194,7 +171,6 @@ def main():
         print(f"遷移前のURL: {url_before}")
 
         # クリックする
-        # JS/TS: await nextButton.click()
         next_button.click()
         print("「next」ボタンをクリックしました")
 
@@ -214,32 +190,27 @@ def main():
         # ================================================================
         # 7. テキスト入力 -- locator.fill()
         # ================================================================
-        # fill() はテキストフィールドに文字を入力する
-        # JS/TS: await page.locator('input').fill('text')
-        # Python: page.locator("input").fill("text")
+        # fill() はテキストフィールドに文字を入力する。
         #
         # ※ fill() は既存の値をクリアしてから入力する
-        # ※ type() もあるが、fill() の方が高速で推奨されている
+        # ※ 1文字ずつ入力する type() もあるが、fill() の方が高速で推奨されている
 
         print("\n" + "=" * 60)
         print("7. テキスト入力（fill の例）")
         print("=" * 60)
 
         # books.toscrape.com にはフォームがないので、
-        # ここでは Google に移動して検索ボックスに入力する例を示す
-        # ※ 実際のプロジェクトでは対象サイトのフォームを操作する
+        # ここでは使い方の紹介のみ（フォーム操作は Lv07 でたっぷり練習する）
         print("fill() の使い方:")
         print('  page.locator("input[name=q]").fill("Python Playwright")')
         print("  → テキストフィールドに「Python Playwright」と入力する")
         print("  ※ fill() は既存テキストをクリアしてから入力する")
-        print("  ※ JS/TS の element.type() ではなく fill() を使うのが推奨")
 
         # ================================================================
         # 8. スクリーンショット -- page.screenshot()
         # ================================================================
-        # screenshot() は現在のページのスクリーンショットを撮る
-        # JS/TS: await page.screenshot({ path: 'screenshot.png' })
-        # Python: page.screenshot(path="screenshot.png")
+        # screenshot() は現在のページのスクリーンショットを撮る。
+        # 自動化処理の途中経過を記録したり、エラー時の状況確認に便利。
 
         print("\n" + "=" * 60)
         print("8. スクリーンショット")
@@ -251,15 +222,11 @@ def main():
         print(f"スクリーンショットを保存しました: {screenshot_path}")
 
         # full_page=True で、スクロールが必要なページも全体を撮れる
-        # JS/TS: await page.screenshot({ path: 'full.png', fullPage: true })
-        # Python: page.screenshot(path="full.png", full_page=True)  ← snake_case
         full_screenshot_path = "screenshot_full.png"
         page.screenshot(path=full_screenshot_path, full_page=True)
         print(f"フルページスクリーンショットを保存しました: {full_screenshot_path}")
 
         # 特定の要素だけのスクリーンショットも撮れる
-        # JS/TS: await page.locator('selector').screenshot()
-        # Python: page.locator("selector").screenshot(path="element.png")
         element_screenshot_path = "screenshot_header.png"
         page.locator("header").screenshot(path=element_screenshot_path)
         print(f"ヘッダーのスクリーンショットを保存しました: {element_screenshot_path}")
@@ -269,8 +236,6 @@ def main():
         # ================================================================
         # with 文で管理しているので、ブロック終了時に自動で閉じられるが、
         # 明示的に閉じることもできる
-        # JS/TS: await browser.close()
-        # Python: browser.close()
 
         # 結果が見えるように少し待つ（学習用）
         print("\n3秒後にブラウザを閉じます...")
@@ -302,16 +267,15 @@ def main():
     7. page.screenshot() でスクリーンショットを撮る
     8. browser.close() でブラウザを閉じる
 
-    ★ JS/TS の Playwright とほぼ同じ！
-    ★ 違いは snake_case と await の有無だけ！
+    ★ locator は要素が現れるまで自動で待ってくれるのが Playwright の強み！
     """)
 
 
 # ============================================================
 # エントリーポイント
 # ============================================================
-# __name__ == "__main__" ガード
-# JS/TS にはない概念。このファイルが直接実行されたときだけ main() を呼ぶ。
+# __name__ == "__main__" ガード（Lv03 で学んだ慣習）。
+# このファイルが直接実行されたときだけ main() を呼ぶ。
 # import されたときは main() が実行されない。
 if __name__ == "__main__":
     main()

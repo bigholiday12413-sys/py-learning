@@ -1,7 +1,7 @@
 """
 models.py - クラス定義・継承・dataclass の学習
 
-JS/TS開発者向け: Pythonのクラスシステムを JS/TS と比較しながら学ぶ
+「データとそれを扱う処理をひとまとめにする」仕組みであるクラスを学ぶ
 """
 
 from dataclasses import dataclass, field
@@ -11,38 +11,39 @@ from typing import Optional
 # ============================================================
 # 1. 基本的なクラス定義
 # ============================================================
-# JS/TS:
-#   class Person {
-#     constructor(name, age) {
-#       this.name = name;  // this でインスタンスを参照
-#       this.age = age;
-#     }
-#   }
+# クラスは「モノの設計図」。設計図から作った実体をインスタンスと呼ぶ。
 #
-# Python:
-#   - constructor は __init__ メソッド
-#   - this の代わりに self を使う
-#   - self は「暗黙」ではなく「明示的に」第1引数に書く（★重要な違い）
+#   class Person:
+#       def __init__(self, name, age):
+#           self.name = name
+#           self.age = age
+#
+#   person = Person("太郎", 30)   # インスタンス生成（new などは不要）
+#
+# ポイント:
+#   - __init__ はインスタンス生成時に自動で呼ばれる特別なメソッド（コンストラクタ）
+#   - self は「このインスタンス自身」を指す。メソッドの第1引数に必ず書く
+#   - self.name = name で「このインスタンスの属性 name」に値を保存する
 # ============================================================
 
 class Person:
     """人を表すクラス"""
 
-    # --- クラス変数（JS の static プロパティに相当） ---
-    # JS/TS: static species = "Homo sapiens"
+    # --- クラス変数 ---
+    # ここ（メソッドの外）に書いた変数は「全インスタンスで共有」される。
+    # インスタンスごとの値は __init__ の中で self.xxx に代入する。
     species: str = "Homo sapiens"
 
     def __init__(self, name: str, age: int) -> None:
         """
         コンストラクタ
 
-        JS/TS との違い:
-        - Python は self を明示的に書く（JS の this は暗黙）
-        - 型ヒントは `: str` のように書く（TS の `: string` に相当）
-        - 戻り値の型ヒント `-> None` は TS の `: void` に相当
+        ポイント:
+        - self は明示的に第1引数に書く（呼び出す側は渡さなくてよい）
+        - 引数の型ヒント `: str` と戻り値の型ヒント `-> None` は Lv01 で学んだ通り
         """
         # --- インスタンス変数 ---
-        # JS/TS: this.name = name
+        # self.xxx = ... と代入した瞬間にその属性が作られる
         self.name: str = name
         self.age: int = age
 
@@ -50,24 +51,20 @@ class Person:
         """
         メソッド定義
 
-        JS/TS:
-          greet() { return `Hello, I'm ${this.name}`; }
-
-        Python:
-          - メソッドの第1引数に必ず self を書く
-          - f-string は JS のテンプレートリテラルに相当
+        メソッド = クラスの中に定義した関数。
+        第1引数に必ず self を書き、self.name のように自分の属性へアクセスする。
+        呼び出しは person.greet() のように書く（self は自動で渡される）。
         """
         return f"こんにちは、{self.name}です。{self.age}歳です。"
 
     # --- __str__: 人間向けの文字列表現 ---
-    # JS/TS の toString() に相当
-    # print() や str() で呼ばれる
+    # print() や str() に渡したときに呼ばれる特別なメソッド。
+    # 定義しておくと print(person) が読みやすい表示になる。
     def __str__(self) -> str:
         return f"Person({self.name}, {self.age}歳)"
 
     # --- __repr__: 開発者向けの文字列表現 ---
-    # JS/TS には直接対応するものがない
-    # デバッグ時やインタプリタでの表示に使われる
+    # デバッグ時やインタプリタでの表示に使われる。
     # 理想的には eval(repr(obj)) でオブジェクトを再生成できる形式にする
     def __repr__(self) -> str:
         return f"Person(name='{self.name}', age={self.age})"
@@ -76,18 +73,15 @@ class Person:
 # ============================================================
 # 2. 継承
 # ============================================================
-# JS/TS:
-#   class Employee extends Person {
-#     constructor(name, age, employeeId) {
-#       super(name, age);    // 親の constructor を呼ぶ
-#       this.employeeId = employeeId;
-#     }
-#   }
+# 継承 = 既存のクラスを土台にして、機能を追加・変更した新しいクラスを作ること。
 #
-# Python:
-#   - class Employee(Person): で継承を表す
-#   - super().__init__() で親の __init__ を呼ぶ
-#   - JS の extends と同じ概念だが、多重継承も可能（★Pythonの特徴）
+#   class Employee(Person):   ← カッコ内に親クラスを書く
+#
+# ポイント:
+#   - 親クラスの属性・メソッドをそのまま引き継ぐ
+#   - super().__init__() で親の __init__ を呼び、共通部分の初期化を任せる
+#   - 同名メソッドを定義すれば上書き（オーバーライド）できる
+#   - Python は複数の親を持つ「多重継承」も可能（まずは単一継承から）
 # ============================================================
 
 class Employee(Person):
@@ -95,12 +89,11 @@ class Employee(Person):
 
     def __init__(self, name: str, age: int, employee_id: str, department: str = "未配属") -> None:
         """
-        JS/TS との違い:
-        - super() に引数不要（Python3）
-        - デフォルト引数は JS/TS と同じ書き方
+        ポイント:
+        - super() は「親クラス」を指す。super().__init__(...) で親の初期化を実行
+        - department のようにデフォルト値付きの引数も定義できる
         """
-        # 親クラスの __init__ を呼ぶ
-        # JS/TS: super(name, age)
+        # 親クラスの __init__ を呼ぶ（name と age の初期化は親に任せる）
         super().__init__(name, age)
 
         self.employee_id: str = employee_id
@@ -110,9 +103,9 @@ class Employee(Person):
         """
         メソッドオーバーライド
 
-        JS/TS と同じく、同名メソッドを定義すれば上書きされる。
-        ただし Python には override キーワードはない
-        （typing.override デコレータは Python 3.12+ で追加された）
+        親クラスと同名のメソッドを定義すると上書きされる。
+        親のバージョンを部分的に使いたいときは super().greet() で呼び出せる。
+        （なお Python 3.12+ には @typing.override という明示用デコレータもある）
         """
         # 親クラスのメソッドを呼ぶ: super().greet()
         base_greeting = super().greet()
@@ -131,51 +124,42 @@ class Employee(Person):
 # ============================================================
 # 3. プロパティ（getter / setter）
 # ============================================================
-# JS/TS:
-#   class Circle {
-#     #radius;  // プライベートフィールド
-#     get area() { return Math.PI * this.#radius ** 2; }
-#     set radius(value) {
-#       if (value < 0) throw new Error("...");
-#       this.#radius = value;
-#     }
-#   }
+# 属性の読み書きに「処理を挟みたい」ときに使うのがプロパティ。
+# 例: 値を設定するときにバリデーションしたい、値を毎回計算で求めたい。
 #
-# Python:
-#   - @property デコレータで getter を定義
-#   - @xxx.setter デコレータで setter を定義
-#   - _ プレフィックスは「プライベート」の慣習（強制ではない）
-#   - __ プレフィックスは名前マングリングで外部アクセスを困難にする
+# ポイント:
+#   - @property を付けたメソッドは「属性のように」読み出せる: circle.radius
+#   - @xxx.setter を付けたメソッドは「代入したとき」に呼ばれる: circle.radius = 10
+#   - _ プレフィックスは「外から直接触らないで」という慣習（強制力はない）
+#   - __ プレフィックスにすると名前が変換され、外部からのアクセスがさらに困難になる
 # ============================================================
 
 class Circle:
     """円クラス（プロパティの例）"""
 
     def __init__(self, radius: float) -> None:
-        # _ プレフィックス = 「外から直接触らないで」という慣習
-        # JS/TS の #radius（プライベートフィールド）に近いが、強制力はない
+        # _radius の _ は「内部用の属性なので直接触らないで」という目印
         self._radius: float = radius
 
     # --- getter ---
-    # JS/TS: get radius() { return this.#radius; }
+    # circle.radius と「読み出した」ときにこのメソッドが呼ばれる
     @property
     def radius(self) -> float:
         """半径を取得"""
         return self._radius
 
     # --- setter ---
-    # JS/TS: set radius(value) { ... }
+    # circle.radius = 10 と「代入した」ときにこのメソッドが呼ばれる
     @radius.setter
     def radius(self, value: float) -> None:
         """半径を設定（バリデーション付き）"""
         if value < 0:
-            # JS/TS: throw new Error("...")
+            # raise でエラー（例外）を発生させる。呼び出し側は try/except で捕まえられる
             raise ValueError("半径は0以上でなければなりません")
         self._radius = value
 
     # --- 読み取り専用プロパティ ---
-    # setter を定義しなければ読み取り専用になる
-    # JS/TS: get area() { return ...; }  （setterなし）
+    # setter を定義しなければ読み取り専用になる（代入しようとするとエラー）
     @property
     def area(self) -> float:
         """面積を計算（読み取り専用）"""
@@ -189,18 +173,16 @@ class Circle:
 # ============================================================
 # 4. @dataclass デコレータ
 # ============================================================
-# TypeScript:
-#   interface Product {
-#     id: number;
-#     name: string;
-#     price: number;
-#     inStock: boolean;
-#   }
+# 「データを入れておくためのクラス」を書くとき、__init__ や __repr__ を
+# 毎回手書きするのは面倒。@dataclass を付けると自動生成してくれる。
 #
-# Python の @dataclass:
-#   - TS の interface + クラスの自動実装に近い
-#   - __init__, __repr__, __eq__ を自動生成してくれる
-#   - ボイラープレートを大幅に削減（★非常に便利）
+# 自動生成されるもの:
+#   - __init__ … フィールド定義から自動で作られる
+#   - __repr__ … デバッグしやすい表示
+#   - __eq__  … 全フィールドの値で == 比較できるようになる
+#
+# 設定情報・CSVの1行・APIレスポンスなど「構造化されたデータ」を
+# 表すのに非常に便利で、実務でも多用する。
 # ============================================================
 
 @dataclass
@@ -220,7 +202,8 @@ class Product:
 
 
 # --- frozen=True で不変（イミュータブル）にできる ---
-# TS: Readonly<Product> に相当する概念
+# 生成後にフィールドを変更しようとするとエラーになる。
+# 「途中で書き換わっては困るデータ」に使う。
 @dataclass(frozen=True)
 class ImmutablePoint:
     """変更不可能な座標（frozen dataclass）"""
@@ -235,14 +218,14 @@ class Team:
     チームクラス
 
     field(default_factory=list) について:
-    - Python ではミュータブルなデフォルト値（list, dict等）を直接書けない
-    - JS/TS でも同様の問題がある:
-      class Team { members = [] }  // 全インスタンスで共有されてしまう
-    - default_factory で毎回新しいリストを生成する
+    - リストや辞書のような「変更可能な値」をデフォルト値に直接書くと、
+      全インスタンスで同じリストが共有されてしまう危険があるため、
+      Python は members: list[str] = [] という書き方をエラーにする
+    - default_factory=list とすると「インスタンスごとに新しい空リスト」を作ってくれる
     """
     name: str
     members: list[str] = field(default_factory=list)
-    description: Optional[str] = None  # Optional = string | null (TS)
+    description: Optional[str] = None  # Optional[str] = 「str または None」の意味
 
     def add_member(self, member: str) -> None:
         """メンバーを追加"""
@@ -256,15 +239,13 @@ class Team:
 # ============================================================
 # 5. クラスメソッドとスタティックメソッド
 # ============================================================
-# JS/TS:
-#   class MyClass {
-#     static staticMethod() { ... }        // クラスから直接呼ぶ
-#     static fromString(s) { ... }         // ファクトリメソッド
-#   }
+# 通常のメソッドは「インスタンス」に対して呼ぶが、
+# クラスそのものに対して呼びたいメソッドもある。
 #
-# Python:
-#   - @staticmethod: インスタンスもクラスも受け取らない（JS の static に近い）
-#   - @classmethod: 第1引数にクラス自体を受け取る（ファクトリメソッドに便利）
+#   - @classmethod: 第1引数にクラス自体 (cls) を受け取る。
+#     「別の形式のデータからインスタンスを作る」ファクトリメソッドの定番
+#   - @staticmethod: self も cls も受け取らない。
+#     クラスに関連する「ただの関数」を名前空間としてまとめたいときに使う
 # ============================================================
 
 class Temperature:
@@ -274,8 +255,8 @@ class Temperature:
         self.celsius: float = celsius
 
     # --- クラスメソッド: ファクトリパターン ---
-    # JS/TS: static fromFahrenheit(f) { return new Temperature(...) }
-    # Python: cls が「このクラス自体」を指す（継承時にサブクラスが渡される）
+    # Temperature.from_fahrenheit(212) のようにクラスから直接呼ぶ。
+    # cls は「このクラス自体」を指す（継承時にはサブクラスが渡される）
     @classmethod
     def from_fahrenheit(cls, fahrenheit: float) -> "Temperature":
         """華氏から生成するファクトリメソッド"""
@@ -283,7 +264,6 @@ class Temperature:
         return cls(celsius)  # cls() = Temperature() と同等
 
     # --- スタティックメソッド ---
-    # JS/TS の static メソッドとほぼ同じ
     # self も cls も受け取らない = ただの名前空間付き関数
     @staticmethod
     def is_freezing(celsius: float) -> bool:

@@ -109,13 +109,13 @@ lv09-gyomu-tool/
 
 ## 読む順番
 
-1. **config.json** - まず設定の構造を把握する。JS の設定ファイルと同じ感覚。
+1. **config.json** - まず設定の構造を把握する（Lv08 で学んだ「設定の外出し」）。
 2. **main.py** - エントリポイント。処理の全体像がここで分かる。
-3. **browser.py** - `with` 文でリソースを管理する Python らしいパターン。JS の `try/finally` に相当。
-4. **scraper.py** - Playwright のロケータ API でデータを抽出する。`querySelectorAll` + `map` のイメージ。
-5. **actions.py** - フォーム入力やクリック。Puppeteer/Cypress の経験があれば馴染みやすい。
-6. **export.py** - CSV/JSON出力。`fs.writeFileSync` 相当の処理。
-7. **build.bat** - exe化の手順。Electron の `electron-builder` に近い概念。
+3. **browser.py** - `with` 文でリソースを管理する Python らしいパターン（Lv06 の復習）。
+4. **scraper.py** - Playwright のロケータ API でデータを抽出する（Lv05〜06 の実践）。
+5. **actions.py** - フォーム入力やクリック（Lv07 の実践）。
+6. **export.py** - CSV/JSON出力（Lv02 の実践）。
+7. **build.bat** - exe化の手順（Lv08 の実践）。
 
 ## 改造課題
 

@@ -1,7 +1,7 @@
 """
 utils.py - モジュール・デコレータ・可変長引数の学習
 
-JS/TS開発者向け: Python のモジュールシステムとユーティリティパターンを学ぶ
+複数ファイルにコードを分割し、再利用する方法を学ぶ
 """
 
 import functools
@@ -12,33 +12,22 @@ from typing import Any, Callable
 # ============================================================
 # 1. モジュールとインポート
 # ============================================================
-# JS/TS:
-#   // 名前付きエクスポート
-#   export function helper() { ... }
-#   export const VALUE = 42;
+# Python では「1つの .py ファイル = 1つのモジュール」。
+# 他のファイルの関数やクラスは import で読み込んで使う。
 #
-#   // デフォルトエクスポート
-#   export default class MyClass { ... }
-#
-#   // インポート
-#   import { helper, VALUE } from './utils';
-#   import MyClass from './utils';
-#
-# Python:
-#   - export は不要。ファイル内のすべてが自動的にエクスポートされる
-#   - _ プレフィックスの名前は「プライベート」扱い（from module import * で除外）
-#   - __all__ リストで公開するものを明示できる（★ベストプラクティス）
-#   - デフォルトエクスポートの概念はない
+# ポイント:
+#   - export のような宣言は不要。ファイル内のすべてが自動的に公開される
+#   - _ プレフィックスの名前は「内部用」の慣習（from module import * で除外される）
+#   - __all__ リストで「公開するもの」を明示できる（★ベストプラクティス）
 #
 # インポートの書き方:
-#   from models import Person          # JS: import { Person } from './models'
-#   from models import Person as P     # JS: import { Person as P } from './models'
-#   import models                      # JS: import * as models from './models'
-#   from models import *               # JS: import * from './models'（非推奨）
+#   from models import Person          # 特定の名前だけ読み込む
+#   from models import Person as P     # 別名を付けて読み込む
+#   import models                      # モジュール全体を読み込む → models.Person
+#   from models import *               # 全部読み込む（名前衝突しやすいので非推奨）
 # ============================================================
 
 # --- __all__: 公開するもの一覧 ---
-# JS/TS の index.ts で re-export するパターンに近い
 # from utils import * した時にこのリストのものだけがインポートされる
 __all__ = [
     "format_name",
@@ -52,37 +41,33 @@ __all__ = [
 # ============================================================
 # 2. *args と **kwargs（可変長引数）
 # ============================================================
-# JS/TS:
-#   function example(...args) { }           // rest パラメータ
-#   example(...myArray);                     // スプレッド構文
-#   function example({name, age}) { }        // 分割代入
+# 「引数がいくつ渡されるか分からない」関数を作るための仕組み。
 #
-# Python:
-#   - *args: 位置引数をタプルとして受け取る（JS の ...args に相当）
-#   - **kwargs: キーワード引数を辞書として受け取る（JS のオブジェクト分割代入に近い）
-#   - 両方同時に使えるのが強力
+#   - *args: 位置引数を何個でも受け取り、タプルにまとめる
+#   - **kwargs: キーワード引数（name=値 の形）を何個でも受け取り、辞書にまとめる
+#   - 両方同時に使える
+#
+# 逆方向にも使える（アンパック）:
+#   f(*my_list)   … リストの中身を個別の引数として渡す
+#   f(**my_dict)  … 辞書の中身をキーワード引数として渡す
 # ============================================================
 
 def print_args_demo(*args: Any, **kwargs: Any) -> None:
     """
     *args, **kwargs のデモ
 
-    JS/TS との比較:
-      // JS - rest パラメータ
-      function demo(...args) {
-        console.log(args);  // 配列
-      }
+    例: print_args_demo(1, "hello", x=10)
+        → args = (1, "hello")、kwargs = {"x": 10}
 
-      // Python は位置引数とキーワード引数を分けて受け取れる
-      // これは JS にない機能 ★
+    位置引数とキーワード引数が自動的に分かれて入ってくる。
     """
     print("--- *args, **kwargs デモ ---")
 
-    # *args はタプル（JS の arguments に近いが、本当の配列/タプル）
+    # *args はタプル（変更できないリストのようなもの）
     print(f"  位置引数 (args): {args}")
     print(f"  args の型: {type(args)}")  # <class 'tuple'>
 
-    # **kwargs は辞書（JS のオブジェクト引数に近い）
+    # **kwargs は辞書
     print(f"  キーワード引数 (kwargs): {kwargs}")
     print(f"  kwargs の型: {type(kwargs)}")  # <class 'dict'>
 
@@ -95,18 +80,14 @@ def merge_dicts(*dicts: dict) -> dict:
     """
     複数の辞書をマージする
 
-    JS/TS:
-      const merged = { ...dict1, ...dict2, ...dict3 };
-      // または
-      const merged = Object.assign({}, dict1, dict2, dict3);
+    後に渡した辞書の値が優先される（同じキーは上書き）。
 
-    Python:
-      - ** 演算子で辞書をアンパック（スプレッドに相当）
-      - Python 3.9+ では | 演算子も使える: dict1 | dict2
+    参考: Python 3.9+ では | 演算子でも書ける: dict1 | dict2
+          ** 演算子によるアンパックでも書ける: {**dict1, **dict2}
     """
     result: dict = {}
     for d in dicts:
-        # JS/TS の Object.assign(result, d) に相当
+        # .update() は辞書に別の辞書の中身を取り込む（同じキーは上書き）
         result.update(d)
     return result
 
@@ -114,25 +95,21 @@ def merge_dicts(*dicts: dict) -> dict:
 # ============================================================
 # 3. デコレータ
 # ============================================================
-# TypeScript:
-#   // TSデコレータ（実験的機能）
-#   function Log(target, key, descriptor) {
-#     const original = descriptor.value;
-#     descriptor.value = function(...args) {
-#       console.log(`Calling ${key}`);
-#       return original.apply(this, args);
-#     };
-#   }
+# デコレータ = 「関数を受け取って、機能を追加した新しい関数を返す」仕組み。
+# 関数定義の直前に @デコレータ名 と書くだけで適用できる。
 #
-#   class MyClass {
-#     @Log
-#     myMethod() { ... }
-#   }
+#   @log_call
+#   def my_function(x, y):
+#       return x + y
 #
-# Python:
-#   - デコレータは「関数を受け取って関数を返す高階関数」
-#   - TS のデコレータよりシンプルで汎用的
-#   - @functools.wraps で元の関数情報を保持する（★重要）
+# は、以下と同じ意味:
+#
+#   def my_function(x, y):
+#       return x + y
+#   my_function = log_call(my_function)   # 関数を包み替えている
+#
+# 「ログ出力」「リトライ」「実行時間計測」のような、
+# 多くの関数に共通して付けたい処理を1か所にまとめられる。
 # ============================================================
 
 def log_call(func: Callable) -> Callable:
@@ -144,15 +121,10 @@ def log_call(func: Callable) -> Callable:
         def my_function(x, y):
             return x + y
 
-    JS/TS で同じことをするなら:
-        function logCall(fn) {
-          return function(...args) {
-            console.log(`Calling ${fn.name} with`, args);
-            const result = fn(...args);
-            console.log(`${fn.name} returned`, result);
-            return result;
-          };
-        }
+    仕組み:
+        1. func として元の関数を受け取る
+        2. 「ログを出してから func を呼ぶ」wrapper 関数を定義する
+        3. wrapper を返す → 以後 my_function() を呼ぶと wrapper が動く
     """
     # @functools.wraps(func) で元の関数の __name__ や __doc__ を保持する
     # これがないとデコレートされた関数の名前が "wrapper" になってしまう
@@ -180,27 +152,14 @@ def retry(max_attempts: int = 3, delay: float = 0.1) -> Callable:
         def unstable_function():
             ...
 
-    構造:
-        retry(max_attempts=3)  →  デコレータ関数を返す
-        そのデコレータ関数(func)  →  wrapper関数を返す
+    構造（関数が3段ネストする）:
+        retry(max_attempts=3)   →  デコレータ関数 decorator を返す
+        decorator(func)         →  wrapper 関数を返す
+        wrapper(...)            →  実際に呼ばれる。失敗したら繰り返す
 
-    JS/TS で書くなら:
-        function retry(maxAttempts = 3, delay = 100) {
-          return function(fn) {
-            return async function(...args) {
-              for (let i = 0; i < maxAttempts; i++) {
-                try { return fn(...args); }
-                catch (e) {
-                  if (i === maxAttempts - 1) throw e;
-                  await new Promise(r => setTimeout(r, delay));
-                }
-              }
-            };
-          };
-        }
-
-    ★ Python のデコレータは「関数のネスト」が深くなりがちだが、
-      概念的には JS のクロージャと同じ
+    ★ ネストが深く見えるが、「引数を覚えた関数を段階的に作っている」
+      だけ。外側の変数 (max_attempts 等) を内側の関数が参照できる
+      性質（クロージャ）を利用している。
     """
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -228,13 +187,12 @@ def format_name(first: str, last: str, *, title: str = "") -> str:
     """
     名前をフォーマットする
 
-    * の後のパラメータはキーワード専用引数（★Pythonならではの機能）
-    JS/TS にはない概念:
+    引数リストの * より後ろはキーワード専用引数になる:
       format_name("太郎", "山田", title="部長")  # OK
-      format_name("太郎", "山田", "部長")          # エラー！ title は名前で指定必須
+      format_name("太郎", "山田", "部長")        # エラー！ title は名前で指定必須
 
-    JS/TS で近いことをするなら:
-      function formatName(first, last, { title = "" } = {}) { ... }
+    「この引数は名前を付けて呼んでほしい」を強制でき、
+    呼び出し側のコードが読みやすくなる。
     """
     if title:
         return f"{title} {last} {first}"
@@ -244,14 +202,13 @@ def format_name(first: str, last: str, *, title: str = "") -> str:
 # ============================================================
 # 5. __name__ == "__main__" ガード
 # ============================================================
-# JS/TS:
-#   - ESM (import/export) にはこの概念がない
-#   - CommonJS では稀に使う: if (require.main === module) { ... }
+# __name__ は Python が自動で用意する変数。
+#   - ファイルを直接実行したとき:      __name__ == "__main__"
+#   - 他のファイルから import されたとき: __name__ == "utils" (モジュール名)
 #
-# Python:
-#   - ファイルが直接実行された時だけ __name__ == "__main__" が True になる
-#   - 他のファイルから import された時は __name__ == "utils" (モジュール名) になる
-#   - テストコードやデモコードを書くのに便利 ★
+# つまり if __name__ == "__main__": の中は
+# 「直接実行されたときだけ」動く。
+# テストコードやデモコードを書くのに便利 ★
 # ============================================================
 
 if __name__ == "__main__":
@@ -265,7 +222,7 @@ if __name__ == "__main__":
     print("\n--- 可変長引数のテスト ---")
     print_args_demo(1, 2, 3, name="Python", version=3.12)
 
-    # スプレッド（アンパック）のデモ
+    # 辞書マージのデモ
     print("\n--- 辞書マージのテスト ---")
     d1 = {"a": 1, "b": 2}
     d2 = {"b": 3, "c": 4}  # b は上書きされる
