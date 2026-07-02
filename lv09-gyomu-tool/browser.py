@@ -3,11 +3,7 @@ browser.py - ブラウザ管理モジュール
 
 BrowserManager クラスで Playwright ブラウザのライフサイクルを管理する。
 with 文（コンテキストマネージャ）で使い、自動的にクリーンアップする。
-
-JS/TS との対比:
-  - コンテキストマネージャ → try/finally で browser.close() するパターン
-  - __enter__ / __exit__ → JS にはない仕組み。Python の with 文専用メソッド
-  - Playwright の API 自体は JS版とほぼ同じ
+（__enter__ / __exit__ の仕組みは Lv06 の scraper.py で学んだ通り）
 """
 
 import os
@@ -26,16 +22,8 @@ class BrowserManager:
             page = bm.page
             page.goto("https://example.com")
 
-    JS/TS との対比:
-        class に __enter__ と __exit__ を定義するのが Python のコンテキストマネージャ。
-        JS なら以下のように書く:
-            const browser = await chromium.launch();
-            try {
-                const page = await browser.newPage();
-                // ...処理
-            } finally {
-                await browser.close();
-            }
+    class に __enter__ と __exit__ を定義すると、そのクラスは
+    with 文で使えるようになる（コンテキストマネージャ）。
     """
 
     def __init__(self, browser_config: dict, logger: logging.Logger):
@@ -49,8 +37,8 @@ class BrowserManager:
         self.config = browser_config
         self.logger = logger
 
-        # --- 後で代入するインスタンス変数を宣言 ---
-        # JS/TS では constructor で this.xxx = null とするのと同じ
+        # --- 後で代入するインスタンス変数を None で初期化しておく ---
+        # （__enter__ が呼ばれるまでは実体がないため）
         self._playwright = None
         self._browser: Browser | None = None
         self.page: Page | None = None
@@ -58,8 +46,6 @@ class BrowserManager:
     def __enter__(self):
         """
         with 文に入ったとき呼ばれる。ブラウザを起動する。
-
-        JS/TS にはこの仕組みがない。Python 独自のプロトコル。
         with 文のブロックに入る直前に自動実行される。
         """
         self.logger.info("ブラウザを起動しています...")
@@ -68,7 +54,7 @@ class BrowserManager:
         self._playwright = sync_playwright().start()
 
         # --- ブラウザを起動 ---
-        # JS 版の chromium.launch({ headless: true }) と同じ
+        # headless や slow_mo は config.json から渡される
         self._browser = self._playwright.chromium.launch(
             headless=self.config.get("headless", True),
             slow_mo=self.config.get("slow_mo", 0),
@@ -134,7 +120,7 @@ class BrowserManager:
     def _close(self):
         """
         ブラウザ関連リソースを順番に閉じる。
-        JS の finally ブロックで browser.close() するのと同じ。
+        片方の終了に失敗しても、もう片方は必ず閉じるようにしている。
         """
         try:
             if self._browser:

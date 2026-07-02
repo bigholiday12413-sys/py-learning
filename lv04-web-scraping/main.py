@@ -4,31 +4,31 @@ Lv04 - Webスクレイピング入門
 requests + BeautifulSoup4 を使って Web ページからデータを取得する。
 対象サイト: https://books.toscrape.com/ （スクレイピング練習専用サイト）
 
-JS/TS 経験者向けに、fetch() や querySelector() との対応を示しながら進める。
+「HTTP でページを取得する → HTML を解析する → 欲しいデータを抜き出す」
+というスクレイピングの基本の流れを学ぶ。
 """
 
 import csv
 import time
 
-import requests  # pip install requests  ← JS/TS の fetch() に相当
-from bs4 import BeautifulSoup  # pip install beautifulsoup4  ← DOMParser に相当
+import requests  # pip install requests  ← HTTP リクエストを送るライブラリ
+from bs4 import BeautifulSoup  # pip install beautifulsoup4  ← HTML を解析するライブラリ
 
 
 # ============================================================
-# 1. HTTP GET リクエスト（JS/TS の fetch() に相当）
+# 1. HTTP GET リクエスト
 # ============================================================
-# JS/TS:
-#   const response = await fetch("https://example.com");
-#   const text = await response.text();
+# ブラウザで URL を開くと、裏では「HTTP リクエスト」がサーバーに送られ、
+# サーバーが HTML を返している。requests ライブラリを使うと、
+# この一連のやりとりをコードから実行できる。
 #
-# Python:
 #   response = requests.get("https://example.com")
 #   text = response.text
 #
-# 違い:
-#   - fetch() は非同期（async/await）だが、requests は同期的に動く
-#   - requests はデフォルトでリダイレクトを自動追跡する
-#   - requests はレスポンスボディに直接アクセスできる（.text, .json() など）
+# ポイント:
+#   - requests.get() は同期的に動く（レスポンスが返るまで次の行に進まない）
+#   - リダイレクトは自動で追跡してくれる
+#   - レスポンスの中身には .text や .json() で直接アクセスできる
 
 def demonstrate_http_request():
     """HTTP リクエストの基本を示すデモ"""
@@ -37,8 +37,8 @@ def demonstrate_http_request():
     print("=" * 60)
 
     # --- User-Agent ヘッダーを設定する ---
+    # User-Agent は「誰がアクセスしているか」をサーバーに伝えるヘッダー。
     # スクレイピング時はボットであることを明示するのがマナー
-    # JS/TS: fetch(url, { headers: { "User-Agent": "..." } })
     headers = {
         "User-Agent": "PythonLearningBot/1.0 (学習用スクリプト)"
     }
@@ -46,27 +46,23 @@ def demonstrate_http_request():
     url = "https://books.toscrape.com/"
 
     # --- GET リクエストを送信 ---
-    # JS/TS: const response = await fetch(url, { headers });
     response = requests.get(url, headers=headers)
 
     # --- ステータスコード ---
-    # JS/TS: response.status     → 200
-    # Python: response.status_code → 200
+    # 200 = 成功、404 = ページが見つからない、500 = サーバーエラー など
     print(f"ステータスコード: {response.status_code}")
 
     # --- レスポンスヘッダー ---
-    # JS/TS: response.headers.get("content-type")
-    # Python: response.headers["Content-Type"]  または .get("Content-Type")
+    # サーバーが返す付加情報。辞書のようにアクセスできる
     print(f"Content-Type: {response.headers.get('Content-Type')}")
     print(f"サーバー: {response.headers.get('Server', '不明')}")
 
     # --- エンコーディング ---
-    # requests が自動判定してくれる（JS/TS にはない概念）
+    # 文字コードは requests が自動判定してくれる
     print(f"エンコーディング: {response.encoding}")
 
     # --- レスポンスボディ ---
-    # JS/TS: const text = await response.text();
-    # Python: text = response.text （プロパティなので () 不要）
+    # .text で HTML 全文を文字列として取得（プロパティなので () 不要）
     html_text = response.text
     print(f"HTMLの長さ: {len(html_text)} 文字")
     print(f"HTML先頭100文字: {html_text[:100]}...")
@@ -74,8 +70,7 @@ def demonstrate_http_request():
     print()
 
     # --- JSON レスポンスの場合（参考） ---
-    # JS/TS: const data = await response.json();
-    # Python: data = response.json()
+    # API のように JSON を返す URL なら .json() で辞書として受け取れる
     # ※ books.toscrape.com は HTML なので JSON の例はコメントのみ
     # json_response = requests.get("https://api.example.com/data")
     # data = json_response.json()  # dict（辞書）として取得できる
@@ -86,18 +81,17 @@ def demonstrate_http_request():
 # ============================================================
 # 2. BeautifulSoup で HTML をパースする
 # ============================================================
-# JS/TS:
-#   const parser = new DOMParser();
-#   const doc = parser.parseFromString(html, "text/html");
+# 取得した HTML はただの長い文字列。そこから「タイトルの部分」「リンクの部分」
+# を探すために、HTML を構造として解析（パース）するのが BeautifulSoup。
 #
-# Python:
 #   from bs4 import BeautifulSoup
 #   soup = BeautifulSoup(html, "lxml")
 #
-# 違い:
-#   - ブラウザの DOM ではなく、独立した HTML パーサー
+# ポイント:
 #   - "lxml" は高速なパーサー（他に "html.parser"（標準）, "html5lib" もある）
-#   - Tag オブジェクトは Element に近いが、メソッド名が異なる
+#   - 解析後は CSS セレクタなどで要素を検索できる
+#   - CSS セレクタ: ".book" は class="book" の要素、"#books" は id="books" の要素、
+#     "h3 a" は「h3 の中の a タグ」を意味する（Web 制作で使う指定方法と同じ）
 
 def demonstrate_parsing():
     """HTML パースの基本を示すデモ"""
@@ -117,9 +111,9 @@ def demonstrate_parsing():
                 <img src="/images/python.jpg" alt="Python入門">
             </div>
             <div class="book" data-price="39.99">
-                <a href="/book/2">JavaScript実践</a>
+                <a href="/book/2">Python実践</a>
                 <span class="author">鈴木花子</span>
-                <img src="/images/js.jpg" alt="JavaScript実践">
+                <img src="/images/python2.jpg" alt="Python実践">
             </div>
         </div>
     </body>
@@ -134,9 +128,8 @@ def demonstrate_parsing():
     # --------------------------------------------------------
     # 2a. select() - CSS セレクタで複数要素を取得
     # --------------------------------------------------------
-    # JS/TS: document.querySelectorAll(".book")  → NodeList
-    # Python: soup.select(".book")               → list[Tag]
-    print("--- select()（querySelectorAll 相当）---")
+    # 一致する要素すべてをリスト (list[Tag]) で返す
+    print("--- select()（複数要素の取得）---")
     books = soup.select(".book")
     print(f"見つかった書籍数: {len(books)}")
 
@@ -148,23 +141,20 @@ def demonstrate_parsing():
     # --------------------------------------------------------
     # 2b. select_one() - CSS セレクタで1つだけ取得
     # --------------------------------------------------------
-    # JS/TS: document.querySelector("h1.title")  → Element | null
-    # Python: soup.select_one("h1.title")        → Tag | None
-    print("--- select_one()（querySelector 相当）---")
+    # 最初に一致した要素だけを返す。見つからなければ None
+    print("--- select_one()（1要素の取得）---")
     title = soup.select_one("h1.title")
     print(f"タイトル要素: {title}")
     print(f"タイトルテキスト: {title.get_text()}")
-    # ※ None チェックは JS/TS と同じく必要
-    #    JS/TS: if (title !== null)
-    #    Python: if title is not None:  または  if title:
+    # ※ 見つからないと None が返るので、実務では
+    #    if title is not None: のようなチェックを入れると安全
 
     print()
 
     # --------------------------------------------------------
     # 2c. find() / find_all() - BS4 独自の検索メソッド
     # --------------------------------------------------------
-    # JS/TS には直接対応するものがない。
-    # CSS セレクタでは書きにくい条件で検索できる。
+    # CSS セレクタでは書きにくい条件（属性値の組み合わせなど）で検索できる。
     print("--- find() / find_all()（BS4独自メソッド）---")
 
     # find_all() は select() に似ているが、タグ名や属性で柔軟に検索できる
@@ -193,15 +183,13 @@ def demonstrate_parsing():
         img = book.select_one("img")
 
         # --- テキストを取得 ---
-        # JS/TS: element.textContent  または  element.innerText
-        # Python: tag.get_text()      または  tag.string（子が1つだけの場合）
+        # tag.get_text() でタグに囲まれた文字列を取得
+        # （子が1つだけなら tag.string でも可）
         book_title = link.get_text()
 
         # --- 属性を取得 ---
-        # JS/TS: element.getAttribute("href")  または  element.href
-        # Python: tag["href"]                  または  tag.get("href")
-        #   tag["href"]  → 属性がないと KeyError（JS なら undefined）
-        #   tag.get("href")  → 属性がないと None を返す（安全）
+        # tag["href"]     → 属性がないと KeyError（エラー）になる
+        # tag.get("href") → 属性がないと None を返す（安全）
         href = link["href"]
         src = img.get("src", "なし")  # デフォルト値を指定可能
         alt = img.get("alt", "")
@@ -238,24 +226,21 @@ def scrape_books():
     }
 
     # --- エラーハンドリング ---
-    # JS/TS: try { ... } catch (error) { ... }
-    # Python: try: ... except Exception as e: ...
+    # ネットワーク越しの処理は失敗がつきもの。try/except で対処する。
     #
-    # 違い:
-    #   - Python は例外の型を指定できる（catch の条件分岐に相当）
-    #   - 複数の except を書ける（JS は catch 1つで instanceof で分岐）
+    # ポイント:
+    #   - except には例外の型を指定でき、型ごとに処理を分けられる
+    #   - 具体的な例外から順に書き、最後に基底クラスで受けるのが定石
     try:
         print(f"リクエスト送信中: {base_url}")
         response = requests.get(base_url, headers=headers, timeout=10)
 
         # --- ステータスコードをチェック ---
         # raise_for_status() は 4xx/5xx エラーで例外を投げる
-        # JS/TS: if (!response.ok) throw new Error(`HTTP ${response.status}`);
         response.raise_for_status()
 
     except requests.exceptions.ConnectionError:
         # ネットワーク接続エラー
-        # JS/TS: catch (error) { if (error instanceof TypeError) ... }
         print("エラー: サイトに接続できません。ネットワークを確認してください。")
         return []
 
@@ -270,8 +255,7 @@ def scrape_books():
         return []
 
     except requests.exceptions.RequestException as e:
-        # その他の requests 関連エラー（基底クラス）
-        # JS/TS: catch (error) { ... }  ← 全てキャッチ
+        # その他の requests 関連エラー（上記すべての基底クラス）
         print(f"エラー: リクエスト中に問題が発生しました: {e}")
         return []
 
@@ -282,7 +266,7 @@ def scrape_books():
     soup = BeautifulSoup(response.text, "lxml")
 
     # --- 書籍一覧を取得 ---
-    # ブラウザの DevTools で HTML 構造を確認するのと同じ要領で、
+    # ブラウザの開発者ツール（F12）で HTML 構造を確認し、
     # CSS セレクタを使って目的の要素を特定する
     book_elements = soup.select("article.product_pod")
     print(f"取得した書籍数: {len(book_elements)}")
@@ -312,7 +296,6 @@ def scrape_books():
         price_tag = book_el.select_one(".price_color")
         price = price_tag.get_text(strip=True) if price_tag else "不明"
         # get_text(strip=True) は前後の空白を除去する
-        # JS/TS: element.textContent.trim()
 
         # --- 在庫状況を取得 ---
         # <p class="instock availability">
@@ -336,10 +319,10 @@ def scrape_books():
             stars = 0
 
         # --- 詳細ページの URL を取得 ---
-        # 相対 URL を絶対 URL に変換する
+        # href には相対 URL（"catalogue/..." など）が入っているので、
+        # ベース URL と結合して絶対 URL にする
         detail_url = title_tag["href"] if title_tag else ""
-        # JS/TS: new URL(href, baseUrl).toString()
-        # Python: urllib.parse.urljoin() でも可能だが、ここは文字列結合で十分
+        # 本格的には urllib.parse.urljoin() を使うが、ここは文字列結合で十分
         full_url = base_url + detail_url
 
         book_data = {
@@ -363,8 +346,7 @@ def scrape_books():
 # ============================================================
 # 4. CSV に保存する
 # ============================================================
-# JS/TS では CSV 出力にライブラリ（papaparse など）を使うことが多いが、
-# Python には標準ライブラリに csv モジュールがある。
+# CSV 出力は Lv02 で学んだ標準ライブラリの csv モジュールを使う。
 
 def save_to_csv(books: list[dict], filename: str = "books.csv"):
     """書籍データを CSV ファイルに保存する"""
@@ -379,7 +361,6 @@ def save_to_csv(books: list[dict], filename: str = "books.csv"):
     # --- CSV ファイルに書き込む ---
     # encoding="utf-8-sig" は Excel で開いたときに文字化けしないためのBOM付きUTF-8
     # newline="" は Windows での余分な空行を防ぐ
-    # JS/TS: fs.writeFileSync("books.csv", csvString) に相当
     with open(filename, "w", encoding="utf-8-sig", newline="") as f:
         # --- ヘッダー行を定義 ---
         fieldnames = ["title", "price", "stock", "stars", "url"]
@@ -405,8 +386,7 @@ def save_to_csv(books: list[dict], filename: str = "books.csv"):
 # 複数ページを巡回する場合、リクエストの間に待機時間を入れる。
 # サーバーへの負荷を軽減し、アクセス拒否を防ぐため。
 #
-# JS/TS: await new Promise(resolve => setTimeout(resolve, 1000));
-# Python: time.sleep(1)
+# time.sleep(秒数) でプログラムを指定秒数だけ停止できる。
 #
 # 今回は1ページだけなので実際には使わないが、
 # 複数ページ対応時のパターンとして示す。
@@ -436,14 +416,13 @@ def scrape_with_delay_example():
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             print(f"  エラー: {e}")
-            continue  # JS/TS の continue と同じ。このページをスキップして次へ
+            continue  # このページをスキップして次のループへ
 
         soup = BeautifulSoup(response.text, "lxml")
         # ... データ抽出 ...
 
         # --- リクエスト間隔を空ける ---
         # 最低1秒は待つのがマナー
-        # JS/TS: await new Promise(r => setTimeout(r, 1000));
         time.sleep(1)
 
         print(f"  完了。次のページまで1秒待機...")
@@ -454,13 +433,9 @@ def scrape_with_delay_example():
 # ============================================================
 # メイン処理
 # ============================================================
-# JS/TS にはない Python 独自のパターン。
+# Lv03 で学んだ __name__ == "__main__" ガード。
 # このファイルが直接実行されたときだけ実行される。
 # import された場合は実行されない。
-#
-# JS/TS で近いのは:
-#   if (import.meta.url === `file://${process.argv[1]}`) { ... }
-#   （ESM の場合。実際にはあまり使わない）
 
 if __name__ == "__main__":
     print()

@@ -5,11 +5,10 @@ Lv07: Playwrightクリック操作・フォーム自動入力
 Playwrightの同期APIを使って、ローカルHTMLフォームを自動操作する。
 業務自動化で必要なフォーム操作パターンを網羅的に学ぶ。
 
-JS/TS経験者向けポイント:
-- Node版: await page.fill('#id', 'text')
-- Python同期版: page.locator('#id').fill('text')  ← awaitなし
-- Python非同期版: await page.locator('#id').fill('text')  ← asyncio使用
+ポイント:
+- 対象は同梱の practice_page.html（ローカルファイルなので何度失敗してもOK）
 - このファイルでは同期APIのみ使用（業務スクリプトでは同期で十分）
+- 「入力 → 選択 → チェック → 送信 → 検証」の一連の流れを体験する
 
 実行方法:
     python main.py
@@ -42,10 +41,6 @@ def demo_text_input(page: Page) -> None:
     fill(): フィールドをクリアしてから入力する（最もよく使う）
     clear(): フィールドの値をクリアする
     type(): 1文字ずつ入力する（fill()より遅いが、キー入力イベントが発火する）
-
-    JS/TS対比:
-      Node: await page.fill('#username', 'tanaka')
-      Python: page.locator('#username').fill('tanaka')
     """
     print("\n=== テキスト入力のデモ ===")
 
@@ -87,10 +82,6 @@ def demo_select_option(page: Page) -> None:
     3. インデックスで指定: select_option(index=2)
 
     複数選択（multiple属性）の場合はリストで渡す。
-
-    JS/TS対比:
-      Node: await page.selectOption('#department', 'engineering')
-      Python: page.locator('#department').select_option('engineering')
     """
     print("\n=== セレクトボックスのデモ ===")
 
@@ -127,10 +118,6 @@ def demo_radio_and_checkbox(page: Page) -> None:
 
     ラジオボタンは value属性で特定する。
     チェックボックスも value属性 または id で特定する。
-
-    JS/TS対比:
-      Node: await page.check('input[value="senior"]')
-      Python: page.locator('input[value="senior"]').check()
     """
     print("\n=== ラジオボタン・チェックボックスのデモ ===")
 
@@ -181,10 +168,6 @@ def demo_file_upload(page: Page) -> None:
     - 単一ファイル: set_input_files("path/to/file")
     - 複数ファイル: set_input_files(["file1", "file2"])
     - ファイル解除: set_input_files([])
-
-    JS/TS対比:
-      Node: await page.setInputFiles('#resume', 'file.txt')
-      Python: page.locator('#resume').set_input_files('file.txt')
     """
     print("\n=== ファイルアップロードのデモ ===")
 
@@ -219,10 +202,6 @@ def demo_keyboard_operations(page: Page) -> None:
     - Enterキーで検索実行やフォーム送信
     - Tabキーで次のフィールドに移動
     - Ctrl+Aで全選択してから入力（既存値の上書き）
-
-    JS/TS対比:
-      Node: await page.press('#username', 'Enter')
-      Python: page.locator('#username').press('Enter')
     """
     print("\n=== キーボード操作のデモ ===")
 
@@ -262,10 +241,6 @@ def demo_mouse_operations(page: Page) -> None:
 
     通常はlocator().click()を使うが、
     座標指定が必要な場合（Canvas操作、地図操作など）にmouseを使う。
-
-    JS/TS対比:
-      Node: await page.mouse.click(100, 200)
-      Python: page.mouse.click(100, 200)
     """
     print("\n=== マウス操作のデモ ===")
 
@@ -302,10 +277,6 @@ def demo_dialog_handling(page: Page) -> None:
 
     重要: ハンドラを登録しないとダイアログが出るとPlaywrightがハングする。
     業務自動化では「確認ダイアログ→OK」のパターンが非常に多い。
-
-    JS/TS対比:
-      Node: page.on('dialog', dialog => dialog.accept())
-      Python: page.on('dialog', lambda dialog: dialog.accept())
     """
     print("\n=== ダイアログ処理のデモ ===")
 
@@ -365,10 +336,6 @@ def demo_multiple_tabs(page: Page) -> None:
     - メインページからリンク先を新しいタブで開いてデータ取得
     - 複数のシステムを並行して操作
     などの場面で必要。
-
-    JS/TS対比:
-      Node: const newPage = await context.newPage()
-      Python: new_page = context.new_page()
     """
     print("\n=== 複数タブ操作のデモ ===")
 
@@ -417,11 +384,6 @@ def demo_iframe_handling(page: Page) -> None:
     - 古い業務システムでiframeが多用されている
     - 埋め込みフォーム（決済フォームなど）がiframe内にある
     などの場面で必須。
-
-    JS/TS対比:
-      Node: page.frameLocator('#iframe').locator('#input')
-      Python: page.frame_locator('#iframe').locator('#input')
-      ※ camelCase vs snake_case の違いだけ
     """
     print("\n=== iframe操作のデモ ===")
 
@@ -455,10 +417,6 @@ def demo_screenshot(page: Page, step_name: str) -> str:
     - 操作前後の証跡としてスクリーンショットを残す
     - エラー発生時のデバッグ用にスクリーンショットを保存
     - テスト結果のビジュアル確認
-
-    JS/TS対比:
-      Node: await page.screenshot({ path: 'screenshot.png', fullPage: true })
-      Python: page.screenshot(path='screenshot.png', full_page=True)
     """
     screenshot_path = str(SCREENSHOT_DIR / f"{step_name}.png")
     page.screenshot(path=screenshot_path, full_page=True)

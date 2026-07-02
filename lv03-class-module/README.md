@@ -2,14 +2,15 @@
 
 ## テーマ
 
-Pythonのクラス定義・継承・モジュールシステムを学ぶ。
-JS/TSの `class`, `extends`, `import/export` との違いを意識しながら進める。
+Python のクラス定義・継承・モジュールシステムを学ぶ。
+「データと処理をひとまとめにする」クラスと、
+「コードをファイルに分けて再利用する」モジュールは、大きなプログラムを書く土台になる。
 
 ## 動かし方
 
 ```bash
 # 1. venv（仮想環境）を作成する（初回のみ）
-#    JS/TS の node_modules に相当する隔離環境
+#    プロジェクトごとにライブラリを隔離するための仕組み
 python -m venv venv
 
 # 2. venv を有効化する
@@ -21,7 +22,6 @@ python -m venv venv
 source venv/bin/activate
 
 # 3. 依存パッケージをインストール（今回は空だが手順として覚える）
-#    JS/TS の npm install に相当
 pip install -r requirements.txt
 
 # 4. 実行
@@ -30,17 +30,17 @@ python main.py
 
 ## 学べること
 
-| Python | JS/TS 対応概念 |
-|--------|---------------|
-| `class`, `__init__`, `self` | `class`, `constructor`, `this` |
-| 継承 (`class Child(Parent)`) | `class Child extends Parent` |
-| `@dataclass` | TypeScript の `interface` / クラスの自動生成 |
-| `__str__`, `__repr__` | `toString()` |
-| `import` / モジュール | `import` / `export` |
-| `__name__ == "__main__"` | トップレベル実行ガード（ESM にはない概念） |
-| `*args`, `**kwargs` | `...rest` / スプレッド構文 |
-| デコレータ (`@`) | TypeScript デコレータ |
-| 型ヒント | TypeScript の型注釈 |
+| トピック | ひとことで言うと |
+|---------|----------------|
+| `class`, `__init__`, `self` | モノの設計図・コンストラクタ・自分自身への参照 |
+| 継承 (`class Child(Parent)`) | 既存クラスを土台に機能を追加する |
+| `@dataclass` | データ入れ用クラスの `__init__` 等を自動生成 |
+| `__str__`, `__repr__` | `print()` したときの表示を定義する |
+| `import` / モジュール | 1ファイル = 1モジュール。他ファイルの機能を読み込む |
+| `__name__ == "__main__"` | 「直接実行されたときだけ動く」ブロック |
+| `*args`, `**kwargs` | 個数不定の引数を受け取る |
+| デコレータ (`@`) | 関数に共通機能を後付けする |
+| `@property` | 属性の読み書きに処理を挟む（getter/setter） |
 
 ## 読む順番
 
@@ -58,13 +58,13 @@ python main.py
 
 ## requirements.txt について
 
-`requirements.txt` は Python プロジェクトの依存パッケージを管理するファイル。
-JS/TS の `package.json` の `dependencies` セクションに相当する。
+`requirements.txt` は Python プロジェクトの依存パッケージ（外部ライブラリ）を
+書き並べておくファイル。`pip install -r requirements.txt` で一括インストールできる。
 
 ```bash
 # パッケージ追加時
 pip install requests
-pip freeze > requirements.txt  # 現在の環境を書き出す（npm lock に近い）
+pip freeze > requirements.txt  # 現在の環境のパッケージ一覧を書き出す
 ```
 
 今回は外部パッケージを使わないため空だが、

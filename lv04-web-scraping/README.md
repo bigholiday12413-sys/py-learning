@@ -3,8 +3,8 @@
 ## テーマ
 
 Python の `requests` + `BeautifulSoup4` を使って Web ページからデータを取得する。
-JS/TS の `fetch()` + `document.querySelector()` との違いを意識しながら、
-HTTP リクエスト・HTML パース・データ抽出の流れを学ぶ。
+「HTTP でページを取得 → HTML を解析 → 欲しいデータを抽出 → CSV に保存」という
+スクレイピングの基本の流れを学ぶ。
 
 練習用サイト [Books to Scrape](https://books.toscrape.com/) を対象にする。
 （スクレイピング練習専用に公開されているサイト）
@@ -13,7 +13,7 @@ HTTP リクエスト・HTML パース・データ抽出の流れを学ぶ。
 
 ```bash
 # 1. venv（仮想環境）を作成する（初回のみ）
-#    JS/TS の node_modules に相当する隔離環境
+#    プロジェクトごとにライブラリを隔離するための仕組み
 python -m venv venv
 
 # 2. venv を有効化する
@@ -25,7 +25,6 @@ python -m venv venv
 source venv/bin/activate
 
 # 3. 依存パッケージをインストール
-#    JS/TS の npm install に相当
 pip install -r requirements.txt
 
 # 4. 実行
@@ -36,21 +35,21 @@ python main.py
 
 ## 学べること
 
-| Python | JS/TS 対応概念 |
-|--------|---------------|
-| `requests.get(url)` | `fetch(url)` |
-| `response.status_code` | `response.status` |
-| `response.headers` | `response.headers` |
-| `response.text` / `.json()` | `response.text()` / `.json()` |
-| `BeautifulSoup(html, "lxml")` | `new DOMParser().parseFromString()` |
-| `soup.select("css")` | `document.querySelectorAll("css")` |
-| `soup.select_one("css")` | `document.querySelector("css")` |
-| `soup.find()` / `find_all()` | なし（BS4 独自の検索メソッド） |
-| `tag.get_text()` | `element.textContent` |
-| `tag["href"]` / `tag.get("href")` | `element.getAttribute("href")` |
-| `try / except` | `try / catch` |
-| `time.sleep(n)` | `await new Promise(r => setTimeout(r, n*1000))` |
-| `csv.writer` | 外部ライブラリ or 手動文字列組み立て |
+| トピック | ひとことで言うと |
+|---------|----------------|
+| `requests.get(url)` | URL に HTTP リクエストを送りページを取得 |
+| `response.status_code` | 200(成功)/404(なし)などの結果コード |
+| `response.headers` | サーバーが返す付加情報 |
+| `response.text` / `.json()` | レスポンス本文（HTML文字列 / JSON→辞書） |
+| `BeautifulSoup(html, "lxml")` | HTML 文字列を構造として解析する |
+| `soup.select("css")` | CSS セレクタで一致する要素をすべて取得 |
+| `soup.select_one("css")` | CSS セレクタで最初の1要素を取得 |
+| `soup.find()` / `find_all()` | タグ名・属性で柔軟に検索 |
+| `tag.get_text()` | タグに囲まれたテキストを取得 |
+| `tag["href"]` / `tag.get("href")` | タグの属性値を取得 |
+| `try / except` | ネットワークエラーへの対処 |
+| `time.sleep(n)` | n 秒待機（リクエスト間隔を空ける） |
+| `csv.DictWriter` | 取得データを CSV に保存 |
 
 ## 読む順番
 

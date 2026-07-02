@@ -5,11 +5,8 @@ Lv06 - Playwrightスクレイピング実践
 このファイルでは Playwright の Sync API を使って、
 動的なWebサイトからデータをスクレイピングする方法を学ぶ。
 
-JS/TS開発者向けメモ:
-  - Playwright は Node.js 版とほぼ同じAPIを持つ（Python版は sync/async の2種類）
-  - Node: page.goto(url) → Python: page.goto(url)  ← ほぼ同じ！
-  - Node: await page.$eval() → Python: page.eval_on_selector()  ← メソッド名が違う
-  - Node: page.waitForSelector() → Python: page.wait_for_selector()  ← snake_case になる
+Lv05 の基礎に加えて、実務で必要になる
+「待機戦略」「ページネーション」「PDF保存」「ネットワーク制御」を扱う。
 
 対象サイト: https://books.toscrape.com（スクレイピング練習用サイト）
 """
@@ -56,17 +53,16 @@ def demo_wait_strategies():
     """
     Playwrightの各種待機戦略を実演する。
 
-    JS/TS開発者向けメモ:
-      Node.js版では await を使うが、Python Sync API では不要。
-      Node: await page.goto(url)
-      Python: page.goto(url)  ← そのまま同期的に実行される
+    なぜ「待機」が重要か:
+      動的なサイトでは、ページを開いた直後はまだデータが描画されていない
+      ことがある。「何を・いつまで待つか」を適切に指定するのが
+      スクレイピングを安定させるコツ。
     """
     print("=" * 60)
     print("3. 待機戦略のデモ")
     print("=" * 60)
 
     # sync_playwright() でPlaywrightインスタンスを作成
-    # JS/TSの playwright.chromium.launch() と同じ
     with sync_playwright() as p:
 
         # --- ブラウザの起動 ---
@@ -82,7 +78,6 @@ def demo_wait_strategies():
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",  # UA偽装
             locale="ja-JP",  # ブラウザの言語設定
         )
-        # JS/TSと同じ: browser.newContext({ viewport: {...}, userAgent: "..." })
 
         page = context.new_page()
 
@@ -97,11 +92,10 @@ def demo_wait_strategies():
         print(f"  → ページタイトル: {page.title()}")
 
         # ----- 待機戦略 2: wait_for_selector() -----
-        # 特定の要素がDOMに現れるまで待つ（動的コンテンツに最適）
-        # JS/TSの page.waitForSelector() と同じ
+        # 特定の要素がページに現れるまで待つ（動的コンテンツに最適）
         print("\n[待機2] wait_for_selector()")
         page.goto("https://books.toscrape.com/")
-        # CSSセレクタで要素を指定（JS/TSと同じセレクタ構文）
+        # CSSセレクタで要素を指定
         page.wait_for_selector("article.product_pod")
         books_count = len(page.query_selector_all("article.product_pod"))
         print(f"  → 検出した書籍数: {books_count}")
@@ -140,13 +134,10 @@ def demo_data_extraction():
     """
     ページ内の要素からデータを抽出する方法を実演する。
 
-    JS/TS開発者向けメモ:
-      - page.$()       → page.query_selector()
-      - page.$$()      → page.query_selector_all()
-      - page.$eval()   → page.eval_on_selector()
-      - page.$$eval()  → page.eval_on_selector_all()
-      - el.textContent → el.text_content()
-      - el.getAttribute() → el.get_attribute()
+    3つの方法を比較する:
+      方法1: query_selector_all() + Python ループ（シンプル）
+      方法2: evaluate()（ブラウザ内で JavaScript を実行して抽出）
+      方法3: locator API（自動待機付き。Playwright の推奨）
     """
     print("=" * 60)
     print("4. データ抽出のデモ")
@@ -159,7 +150,7 @@ def demo_data_extraction():
         page.wait_for_selector("article.product_pod")
 
         # --- 方法1: query_selector_all + Pythonループ ---
-        # JS/TSの page.$$() に相当
+        # 一致した全要素をリストで受け取り、for で1つずつ処理する
         print("\n[方法1] query_selector_all でループ抽出")
         articles = page.query_selector_all("article.product_pod")
 
@@ -179,9 +170,10 @@ def demo_data_extraction():
             print(f"  書籍: {title[:40]}... | {price} | {availability}")
 
         # --- 方法2: evaluate（JavaScript実行） ---
-        # ブラウザ内でJavaScriptを直接実行してデータを取得
-        # 複雑な抽出ロジックをJS側で書きたい場合に便利
-        # JS/TS開発者にとって最も馴染みやすい方法
+        # ブラウザの中で JavaScript コードを実行してデータを取得する方法。
+        # JavaScript はブラウザに組み込まれた言語で、evaluate() に文字列で渡す。
+        # ここでは「読めなくてもOK」。こういう手段もある、という紹介
+        # （ブラウザ内でしか取れない情報を取りたいときの最終手段として使う）
         print("\n[方法2] evaluate でJS実行して抽出")
         js_result = page.evaluate("""
             () => {
@@ -200,7 +192,6 @@ def demo_data_extraction():
 
         # --- 方法3: locator API（推奨） ---
         # Playwright v1.14+ の新しいAPI。自動待機・自動リトライ付き
-        # JS/TSの page.locator() と同じ
         print("\n[方法3] locator API（推奨）")
         # locator は要素への「参照」を保持し、操作時に自動で待機する
         book_locators = page.locator("article.product_pod")
@@ -372,9 +363,9 @@ def demo_network_intercept():
       - 特定APIのレスポンスを監視してデータを取得
       - リクエストをモック（テスト用）
 
-    JS/TS開発者向けメモ:
-      Node: page.route('**/*.png', route => route.abort())
-      Python: page.route('**/*.png', lambda route: route.abort())
+    使い方:
+      page.route("URLパターン", ハンドラ関数) を設定すると、
+      パターンに一致するリクエストのたびにハンドラ関数が呼ばれる。
     """
     print("=" * 60)
     print("7. ネットワークインターセプトのデモ")
@@ -396,8 +387,8 @@ def demo_network_intercept():
             リソースタイプに応じてブロックまたは続行する。
             """
             nonlocal blocked_count
-            # nonlocal: 外側スコープの変数を変更するための宣言
-            # JS/TSではクロージャで自然にできるが、Pythonでは明示的に宣言が必要
+            # nonlocal: 外側の関数の変数に代入するための宣言
+            # （宣言なしで代入すると、この関数内の別変数として扱われてしまう）
 
             resource_type = route.request.resource_type
 
@@ -459,10 +450,9 @@ def demo_browser_context_options():
 
         # --- モバイル端末のエミュレーション ---
         # Playwright に組み込まれたデバイス定義を使える
-        # JS/TSの playwright.devices['iPhone 13'] と同じ
         iphone = p.devices["iPhone 13"]
         mobile_context = browser.new_context(**iphone)
-        # ** はアンパック演算子（JS/TSのスプレッド構文 ...obj と同じ）
+        # **辞書 は「辞書の中身をキーワード引数として展開して渡す」記法（Lv03参照）
         mobile_page = mobile_context.new_page()
         mobile_page.goto("https://books.toscrape.com/")
         mobile_page.wait_for_load_state("networkidle")

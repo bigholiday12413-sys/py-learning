@@ -8,10 +8,10 @@ Lv08: exe化を意識したPythonスクリプトの書き方
   - ログ出力でデバッグしやすくする
   - エラーハンドリングで非エンジニアにも分かるメッセージを表示
 
-JS/TS開発者向けメモ:
-  Node.jsの pkg では __dirname がバンドル後も使えるが、
-  PyInstallerでは sys._MEIPASS という特殊なパスになる。
-  この違いを理解することが最も重要。
+最重要ポイント:
+  exe化すると「ファイルパスの基準」が変わる。
+  スクリプト実行時と exe 実行時の両方で正しく動くパス解決を
+  最初から組み込んでおくのが、exe化で失敗しないコツ。
 """
 
 import sys
@@ -38,10 +38,6 @@ def get_base_path() -> Path:
 
     スクリプトとして実行している場合:
       このファイルが置かれているディレクトリを返す。
-
-    JS/TS開発者向けメモ:
-      Node.jsでいう __dirname に相当するが、
-      exe化すると一時ディレクトリになる点が大きく異なる。
     """
     if getattr(sys, 'frozen', False):
         # --- exe化されている場合 ---
@@ -61,10 +57,6 @@ def get_exe_dir() -> Path:
     この関数はexeファイルの実際の場所を返す。
 
     config.jsonなど「exeと同じフォルダに置くファイル」を読むときはこちらを使う。
-
-    JS/TS開発者向けメモ:
-      pkgでバンドルしたNode.jsアプリでも process.execPath で
-      実行ファイルのパスが取れるのと同じ発想。
     """
     if getattr(sys, 'frozen', False):
         # --- exe化されている場合 ---
@@ -85,10 +77,7 @@ def setup_logging(log_dir: Path, debug: bool = False) -> logging.Logger:
 
     exe化したツールでは print() だけでなく、ファイルにもログを残すと
     問題が起きたときにデバッグしやすい。
-
-    JS/TS開発者向けメモ:
-      Node.jsの winston や pino に相当する標準ライブラリ。
-      Pythonでは logging モジュールが標準で使える。
+    （logging モジュールの基本は Lv06 の scraper.py を参照）
     """
     # ログディレクトリが無ければ作成
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -136,10 +125,8 @@ def load_config(config_path: Path) -> dict:
     exe化したアプリでは、設定を外部ファイルにしておくと
     再ビルドせずに挙動を変えられるので便利。
 
-    JS/TS開発者向けメモ:
-      Node.jsの .env + dotenv や config.json と同じ発想。
-      ただしPythonではdotenvは標準ライブラリではないので、
-      jsonファイルで管理するのがシンプル。
+    JSON は「テキストで書ける設定データの形式」で、Python の辞書と
+    ほぼ同じ見た目。標準ライブラリ json で読み書きできる。
     """
     if not config_path.exists():
         raise FileNotFoundError(

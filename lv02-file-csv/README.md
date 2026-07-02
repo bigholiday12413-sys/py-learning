@@ -4,7 +4,7 @@
 
 Python のファイル操作と CSV の読み書きを学ぶ。
 `open()` / `with` 文 / `csv` モジュール / `pathlib` など、
-JS/TS にはない Python らしいファイル処理パターンを体験する。
+実務で毎日のように使うファイル処理パターンを体験する。
 
 ## 動かし方
 
@@ -18,16 +18,16 @@ python main.py
 
 ## 学べること
 
-| # | トピック | JS/TS との対応 |
-|---|---------|---------------|
-| 1 | `open()` と読み書きモード (`r`, `w`, `a`) | `fs.readFileSync` / `fs.writeFileSync` |
-| 2 | `with` 文 (コンテキストマネージャ) | `try/finally` でリソース解放するパターン |
-| 3 | テキストファイルの読み書き | Node.js の `fs` モジュール |
-| 4 | `csv.reader` / `csv.writer` | npm の `csv-parse` / `csv-stringify` |
-| 5 | `csv.DictReader` / `csv.DictWriter` | オブジェクト配列としての CSV 処理 |
-| 6 | `pathlib.Path` (モダンなパス操作) | Node.js の `path` モジュール |
-| 7 | `os.path` vs `pathlib` の比較 | ― |
-| 8 | `encoding` パラメータ (`utf-8`, `shift_jis`) | Node.js の `iconv-lite` など |
+| # | トピック | ひとことで言うと |
+|---|---------|----------------|
+| 1 | `open()` と読み書きモード (`r`, `w`, `a`) | ファイルを開く・書く・追記する |
+| 2 | `with` 文 (コンテキストマネージャ) | ファイルの閉じ忘れを防ぐ安全な書き方 |
+| 3 | テキストファイルの読み書き | `read()` / `readlines()` / 1行ずつループ |
+| 4 | `csv.reader` / `csv.writer` | CSV をリスト形式で読み書き |
+| 5 | `csv.DictReader` / `csv.DictWriter` | CSV を辞書形式で読み書き（列名でアクセス） |
+| 6 | `pathlib.Path` (モダンなパス操作) | パスの結合・分解・存在チェック |
+| 7 | `os.path` vs `pathlib` の比較 | 旧式 API と新式 API の違い |
+| 8 | `encoding` パラメータ (`utf-8`, `shift_jis`) | 日本語の文字化け対策 |
 
 ## 読む順番
 

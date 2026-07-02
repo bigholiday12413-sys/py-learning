@@ -11,10 +11,9 @@ main.py - 業務自動化ツールのエントリポイント
   7. データをCSV/JSONに出力する
   8. ブラウザを閉じる
 
-JS/TS との対比:
-  - json の読み込み → Node.js なら require('./config.json') や fs.readFileSync
-  - logging → Node.js なら winston や pino に相当
-  - if __name__ == "__main__" → Node.js にはない概念。Python 独自のエントリポイント判定
+このレベルは Lv1〜Lv8 の総まとめ。
+設定ファイル(Lv08)・logging(Lv06)・クラスとモジュール分割(Lv03)・
+Playwright操作(Lv05〜07)・CSV出力(Lv02) がすべて登場する。
 """
 
 import json
@@ -25,7 +24,7 @@ from datetime import datetime
 from pathlib import Path
 
 # --- 同じフォルダにあるモジュールをインポート ---
-# JS/TS の import { BrowserManager } from './browser' と同じ感覚
+# 機能ごとにファイルを分け、main.py はそれらを組み合わせるだけにする
 from browser import BrowserManager
 from scraper import PageScraper
 from actions import perform_login, perform_cart_actions
@@ -34,8 +33,7 @@ from export import save_to_csv, save_to_json, generate_summary
 
 def load_config(config_path: str) -> dict:
     """
-    設定ファイルを読み込む。
-    JS でいう JSON.parse(fs.readFileSync('config.json', 'utf-8'))
+    設定ファイル (config.json) を読み込んで辞書として返す。
     """
     try:
         with open(config_path, "r", encoding="utf-8") as f:
@@ -56,9 +54,8 @@ def setup_logging(output_dir: str) -> logging.Logger:
     """
     ログの設定。コンソールとファイルの両方に出力する。
 
-    JS/TS との対比:
-      - Python の logging モジュール → winston や pino の設定に近い
-      - handler（出力先）を追加する設計 → winston の transports と同じ発想
+    logging モジュールは「ロガー」に複数の handler（出力先）を追加できる設計。
+    ここではコンソール用とファイル用の2つの handler を登録する。
     """
     # --- 出力ディレクトリがなければ作成 ---
     os.makedirs(output_dir, exist_ok=True)
@@ -68,7 +65,7 @@ def setup_logging(output_dir: str) -> logging.Logger:
     logger.setLevel(logging.DEBUG)
 
     # --- フォーマットを定義 ---
-    # JS の console.log とは違い、Python は出力形式を細かく制御できる
+    # 日時・ログレベル・メッセージを毎行自動で付ける
     formatter = logging.Formatter(
         "%(asctime)s [%(levelname)s] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -95,10 +92,7 @@ def setup_logging(output_dir: str) -> logging.Logger:
 def main():
     """
     メイン処理。全体のワークフローを制御する。
-
-    JS/TS との対比:
-      - async function main() { ... } に相当
-      - Python の Playwright は sync API も用意されているので await 不要
+    個々の処理は各モジュールに任せ、ここでは流れの制御に集中する。
     """
     print("=" * 50)
     print("  業務自動化ツール - 開始")
@@ -127,7 +121,7 @@ def main():
     try:
         # --- ブラウザを起動 ---
         # with 文でブラウザのライフサイクルを管理する
-        # JS の try/finally で browser.close() するのと同じ
+        # （エラーが起きても確実にブラウザが閉じられる）
         with BrowserManager(config["browser"], logger) as bm:
             page = bm.page
 
@@ -192,7 +186,6 @@ def main():
 
 
 # --- エントリポイント ---
-# JS/TS にはないPython独自の仕組み。
 # このファイルが直接実行されたときだけ main() を呼ぶ。
 # 他のファイルから import されたときは呼ばれない。
 if __name__ == "__main__":
