@@ -77,6 +77,10 @@ macOS では `python` → `python3`、`pip` → `pip3` に読み替える。
 **Tabキー補完は必ず使うこと。** `cd lv0` まで打って Tab を押せば残りが補完される。
 長いフォルダ名を手打ちするとタイプミスの元。
 
+cmd と PowerShell の違い、管理者権限や実行ポリシー、ファイル操作コマンドの全体像は
+**[補講C: cmd と PowerShell 入門](../appendix-cmd-powershell/README.md)** で詳しく扱う。
+Lv0 を終えたら早めに一読しておくのがおすすめ。
+
 ---
 
 ## 4. venv（仮想環境）の予行演習
