@@ -1,0 +1,3 @@
+# Kintone REST API 連携に必要なのは requests だけ
+# （Lv04 と違い HTML パースが不要なので BeautifulSoup は要らない）
+requests

@@ -1,0 +1,9 @@
+# pandas: 表データの集計・加工（Excel のピボットをコードで）
+pandas
+
+# plotly: インタラクティブなグラフ描画
+plotly
+
+# kaleido: plotly のグラフを PNG 画像として保存するのに必要
+# （HTML 出力だけなら不要。PNG が要らなければ外してもよい）
+kaleido

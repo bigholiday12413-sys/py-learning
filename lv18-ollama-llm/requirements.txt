@@ -1,0 +1,7 @@
+# Ollama の API はただの REST API なので、vv04/vv10 でおなじみの requests だけで動く
+requests
+
+# 【任意】公式の Python クライアント。requests の代わりに使いたい場合はコメントを外す
+#   import ollama; ollama.chat(model="qwen3:8b", messages=[...]) のように書ける
+#   （main.py 冒頭のコメント参照。中身は localhost:11434 を叩いているだけ）
+# ollama

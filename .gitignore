@@ -19,6 +19,9 @@ venv/
 .DS_Store
 Thumbs.db
 
+# 秘密情報（APIトークン入りの設定ファイル。example の方はコミットしてOK）
+config.json
+
 # 実行結果
 output/
 *.png

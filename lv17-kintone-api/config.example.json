@@ -1,0 +1,7 @@
+{
+  "_comment": "このファイルを config.json という名前でコピーして、値を自分の環境に書き換える。config.json は gitignore 対象（トークンをコミットしないこと！）",
+  "subdomain": "your-subdomain",
+  "app_id": 17,
+  "api_token": "ここにAPIトークンを貼り付ける",
+  "output_dir": "output"
+}
